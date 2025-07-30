@@ -1,0 +1,32 @@
+name: Publish to GitHub Packages
+
+on:
+  release:
+    types: [published]
+  # 👇 ou décommente ça si tu veux publier à chaque push sur main :
+  # push:
+  #   branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write # pour publier sur GitHub Packages
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish
+        env:
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
