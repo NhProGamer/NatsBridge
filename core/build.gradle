@@ -1,0 +1,11 @@
+description = 'Core NATS connection and API implementation'
+
+dependencies {
+    api project(':common')
+
+    // Reflection utilities
+    implementation 'org.reflections:reflections:0.10.2'
+
+    // Annotations processing
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}

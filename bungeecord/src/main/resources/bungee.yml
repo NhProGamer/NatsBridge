@@ -1,0 +1,6 @@
+name: ${plugin_name}
+version: ${plugin_version}
+main: ${plugin_main_bungeecord}
+author: ${plugin_author}
+description: ${plugin_description}
+website: ${plugin_website}

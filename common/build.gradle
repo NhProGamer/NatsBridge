@@ -1,0 +1,6 @@
+description = 'Common classes and interfaces for NATS library'
+
+dependencies {
+    // Annotations processing
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}

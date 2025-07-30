@@ -1,0 +1,31 @@
+description = 'NATS library for Spigot/Paper servers'
+
+dependencies {
+    api project(':common')
+    api project(':core')
+
+    // Spigot/Paper API
+    compileOnly 'org.spigotmc:spigot-api:1.20.4-R0.1-SNAPSHOT'
+
+    // Annotations processing
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}
+
+jar {
+    archiveClassifier = 'spigot'
+}
+
+processResources {
+    filesMatching('plugin.yml') {
+        expand([
+                'plugin_name'        : project.property('plugin.name'),
+                'plugin_version'     : project.property('plugin.version'),
+                'plugin_main_spigot' : project.property('plugin.main.spigot'),
+                'plugin_author'      : project.property('plugin.author'),
+                'plugin_description' : project.property('plugin.description'),
+                'plugin_website'     : project.property('plugin.website')
+        ])
+    }
+}
+
+

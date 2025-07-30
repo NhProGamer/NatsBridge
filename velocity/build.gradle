@@ -1,0 +1,21 @@
+description = 'NATS library for Velocity proxy'
+
+dependencies {
+    api project(':core')
+
+    // Velocity API
+    compileOnly 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
+}
+
+jar {
+    archiveClassifier = 'velocity'
+}
+
+processResources {
+    expand project.properties
+
+    filesMatching('velocity-plugin.json') {
+        expand project.properties
+    }
+}

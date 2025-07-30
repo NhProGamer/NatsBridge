@@ -1,0 +1,35 @@
+nats:
+  # Liste des serveurs NATS (peut être un seul serveur ou un cluster)
+  servers:
+    - "nats://127.0.0.1:4222"
+    - "nats://nats-cluster.local:4222"
+
+  # Configuration d'authentification (optionnel)
+  auth:
+    enabled: true
+    # Authentification par nom d'utilisateur/mot de passe
+    username: "user"
+    password: "pass"
+    # OU authentification par token (si fourni, username/password sont ignorés)
+    # token: "your_token_here"
+
+  # Configuration TLS (optionnel)
+  tls:
+    enabled: false
+    # Chemins vers les keystores (optionnel)
+    # keystore: "/path/to/keystore.jks"
+    # keystore_password: "keystore_password"
+    # truststore: "/path/to/truststore.jks"
+    # truststore_password: "truststore_password"
+
+  # Configuration de reconnexion
+  reconnect:
+    # Nombre maximum de tentatives de reconnexion (-1 = infini)
+    max_reconnects: -1
+    # Délai entre les tentatives de reconnexion (en millisecondes)
+    reconnect_wait: 2000
+    # Timeout de connexion (en millisecondes)
+    connection_timeout: 5000
+
+  # Niveau de logging (TRACE, DEBUG, INFO, WARN, ERROR)
+  logging_level: INFO

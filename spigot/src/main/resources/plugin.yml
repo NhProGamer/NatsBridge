@@ -1,0 +1,22 @@
+name: ${plugin_name}
+version: ${plugin_version}
+main: ${plugin_main_spigot}
+author: ${plugin_author}
+description: ${plugin_description}
+website: ${plugin_website}
+api-version: 1.20
+
+# Charger avant les autres plugins pour être disponible
+load: STARTUP
+loadbefore: ["*"]
+
+commands:
+  nats:
+    description: NATS library management commands
+    usage: /<command> [status|test|rescan|reload]
+    permission: natsBridge.admin
+
+permissions:
+  natsBridge.admin:
+    description: Allow access to NATS admin commands
+    default: op

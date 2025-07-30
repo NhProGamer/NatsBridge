@@ -1,0 +1,28 @@
+description = 'NATS library for BungeeCord proxy'
+
+dependencies {
+    api project(':core')
+
+    // BungeeCord API
+    compileOnly 'net.md-5:bungeecord-api:1.20-R0.1'
+
+    // Annotations processing
+    compileOnly 'org.jetbrains:annotations:24.0.1'
+}
+
+jar {
+    archiveClassifier = 'bungeecord'
+}
+
+processResources {
+    filesMatching('bungee.yml') {
+        expand([
+                'plugin_name'        : project.property('plugin.name'),
+                'plugin_version'     : project.property('plugin.version'),
+                'plugin_main_bungeecord' : project.property('plugin.main.bungeecord'),
+                'plugin_author'      : project.property('plugin.author'),
+                'plugin_description' : project.property('plugin.description'),
+                'plugin_website'     : project.property('plugin.website')
+        ])
+    }
+}
