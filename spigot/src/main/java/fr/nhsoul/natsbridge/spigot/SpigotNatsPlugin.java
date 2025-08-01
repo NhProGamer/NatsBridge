@@ -49,6 +49,8 @@ public class SpigotNatsPlugin extends JavaPlugin {
 
                 // Enregistrer les événements pour les nouveaux plugins
                 getServer().getPluginManager().registerEvents(pluginScanner, this);
+                getServer().getPluginManager().callEvent(new SpigotNatsBridgeConnectedEvent());
+
 
             }).exceptionally(throwable -> {
                 getLogger().severe("Failed to start NATS library: " + throwable.getMessage());

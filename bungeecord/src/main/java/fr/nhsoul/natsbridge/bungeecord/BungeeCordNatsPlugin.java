@@ -46,6 +46,8 @@ public class BungeeCordNatsPlugin extends Plugin {
 
                 // Enregistrer les événements pour les nouveaux plugins
                 getProxy().getPluginManager().registerListener(this, pluginScanner);
+                getProxy().getPluginManager().callEvent(new BungeeNatsBridgeConnectedEvent());
+
 
             }).exceptionally(throwable -> {
                 getLogger().severe("Failed to start NATS library: " + throwable.getMessage());
