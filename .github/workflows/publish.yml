@@ -22,11 +22,18 @@ jobs:
           distribution: temurin
           java-version: 21
 
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
+      - name: Fix line endings
+      run: git config --global core.autocrlf input
 
-      - name: Publish to GitHub Packages
+      - name: Make gradlew executable
+        run: |
+          ls -l ./gradlew
+          chmod +x ./gradlew
+          ls -l ./gradlew
+
+      - name: Publish with Gradle
         run: ./gradlew publish
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
