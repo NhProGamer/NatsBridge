@@ -3,10 +3,7 @@ package fr.nhsoul.natsbridge.core.subscription;
 import fr.nhsoul.natsbridge.common.annotation.NatsSubscribe;
 import fr.nhsoul.natsbridge.common.exception.NatsException;
 import fr.nhsoul.natsbridge.core.connection.NatsConnectionManager;
-import io.nats.client.Connection;
-import io.nats.client.Message;
-import io.nats.client.MessageHandler;
-import io.nats.client.Subscription;
+import io.nats.client.*;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +27,7 @@ public class SubscriptionManager {
     private static final Logger logger = LoggerFactory.getLogger(SubscriptionManager.class);
 
     private final NatsConnectionManager connectionManager;
-    private final Map<String, Subscription> subscriptions = new ConcurrentHashMap<>();
+    private final Map<String, Dispatcher> subscriptions = new ConcurrentHashMap<>();
     private final Map<String, SubscriptionHandler> handlers = new ConcurrentHashMap<>();
     private final ExecutorService asyncExecutor;
 
@@ -128,12 +125,12 @@ public class SubscriptionManager {
      * Désabonne toutes les souscriptions.
      */
     public void unsubscribeAll() {
-        for (Map.Entry<String, Subscription> entry : subscriptions.entrySet()) {
+        for (Map.Entry<String, Dispatcher> entry : subscriptions.entrySet()) {
             String subject = entry.getKey();
-            Subscription subscription = entry.getValue();
+            Dispatcher dispatcher = entry.getValue();
 
             try {
-                subscription.unsubscribe();
+                dispatcher.unsubscribe(subject);
                 logger.debug("Unsubscribed from subject '{}'", subject);
             } catch (Exception e) {
                 logger.error("Failed to unsubscribe from subject '{}'", subject, e);
@@ -150,10 +147,10 @@ public class SubscriptionManager {
      * @param subject le sujet à désabonner
      */
     public void unsubscribe(@NotNull String subject) {
-        Subscription subscription = subscriptions.remove(subject);
-        if (subscription != null) {
+        Dispatcher dispatcher = subscriptions.remove(subject);
+        if (dispatcher != null) {
             try {
-                subscription.unsubscribe();
+                dispatcher.unsubscribe(subject);
                 logger.debug("Unsubscribed from subject '{}'", subject);
             } catch (Exception e) {
                 logger.error("Failed to unsubscribe from subject '{}'", subject, e);
@@ -177,10 +174,10 @@ public class SubscriptionManager {
         }
 
         try {
-            MessageHandler messageHandler = message -> handleMessage(message, handler);
-            Subscription subscription = connection.subscribe(subject, messageHandler.toString());
+            Dispatcher dispatcher = connection.createDispatcher(message -> handleMessage(message, handler));
+            dispatcher.subscribe(subject);
 
-            subscriptions.put(subject, subscription);
+            subscriptions.put(subject, dispatcher); // Map<String, Object> ou spécifique au type
             logger.info("Subscribed to NATS subject '{}'", subject);
 
         } catch (Exception e) {
@@ -188,6 +185,7 @@ public class SubscriptionManager {
             throw new NatsException.SubscriptionException("Failed to subscribe to subject: " + subject, e);
         }
     }
+
 
     private void handleMessage(@NotNull Message message, @NotNull SubscriptionHandler handler) {
         if (handler.isAsync()) {
