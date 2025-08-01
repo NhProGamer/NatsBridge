@@ -42,6 +42,7 @@ There are 3 events for Velocity, Bungeecord and Spigot.
 - VelocityNatsBridgeConnectedEvent
 - BungeeNatsBridgeConnectedEvent
 - SpigotNatsBridgeConnectedEvent
+
 Something like
 ```java
     @EventHandler
