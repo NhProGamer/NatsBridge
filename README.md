@@ -45,10 +45,10 @@ There are 3 events for Velocity, Bungeecord and Spigot.
 
 Something like
 ```java
-    @EventHandler
-    public void onNatsBridgeConnected(SpigotNatsBridgeConnectedEvent event) {
-        //Do something here
-    }
+@EventHandler
+public void onNatsBridgeConnected(SpigotNatsBridgeConnectedEvent event) {
+    //Do something here
+}
 ```
 
 You just need to listen these events and the event is fire when the connection to NATS is up.
