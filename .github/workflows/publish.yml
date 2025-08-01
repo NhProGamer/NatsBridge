@@ -23,15 +23,9 @@ jobs:
           
       - name: Fix line endings
         run: git config --global core.autocrlf input
-        
-      - name: Make gradlew executable
-        run: |
-          ls -la
-          chmod +x ./gradlew
-          ls -l ./gradlew
           
       - name: Publish with Gradle
-        run: ./gradlew publish
+        run: bash ./gradlew publish
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
