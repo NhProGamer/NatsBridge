@@ -3,9 +3,6 @@ name: Publish to GitHub Packages
 on:
   release:
     types: [published]
-  # 👇 ou décommente ça si tu veux publier à chaque push sur main :
-  # push:
-  #   branches: [main]
 
 jobs:
   publish:
@@ -13,7 +10,7 @@ jobs:
 
     permissions:
       contents: read
-      packages: write # pour publier sur GitHub Packages
+      packages: write
 
     steps:
       - name: Checkout code
@@ -24,6 +21,9 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
+
+      - name: Make Gradle wrapper executable
+        run: chmod +x ./gradlew
 
       - name: Publish to GitHub Packages
         run: ./gradlew publish
