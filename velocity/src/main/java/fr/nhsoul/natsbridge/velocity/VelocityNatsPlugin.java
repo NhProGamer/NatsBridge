@@ -50,6 +50,7 @@ public class VelocityNatsPlugin {
     @Subscribe
     public void onProxyInitialization(@NotNull ProxyInitializeEvent event) {
         instance = this;
+        server.getEventManager().register(instance, new VelocityNatsBridgeConnectedEvent());
 
         try {
             // Créer le fichier de configuration s'il n'existe pas
@@ -71,6 +72,7 @@ public class VelocityNatsPlugin {
 
                 // Enregistrer les événements pour les nouveaux plugins
                 server.getEventManager().register(this, pluginScanner);
+                server.getEventManager().fire(new VelocityNatsBridgeConnectedEvent());
 
             }).exceptionally(throwable -> {
                 logger.error("Failed to start NATS library", throwable);
