@@ -16,14 +16,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-
       - name: Fix line endings
-      run: git config --global core.autocrlf input
+        run: git config --global core.autocrlf input
 
       - name: Make gradlew executable
         run: |
@@ -36,4 +30,3 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
