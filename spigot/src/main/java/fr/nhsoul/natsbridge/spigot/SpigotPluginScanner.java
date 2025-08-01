@@ -36,13 +36,18 @@ public class SpigotPluginScanner implements Listener {
      * Scanne tous les plugins actuellement chargés.
      */
     public void scanAllPlugins() {
-        Plugin[] plugins = Bukkit.getPluginManager().getPlugins();
+        //logger.info("Scanning {} loaded plugins for @NatsSubscribe annotations", plugins.length);
 
-        logger.info("Scanning {} loaded plugins for @NatsSubscribe annotations", plugins.length);
-
-        for (Plugin plugin : plugins) {
-            if (plugin.isEnabled() && !plugin.equals(natsPlugin)) {
-                scanPlugin(plugin);
+        for (Plugin plugin : Bukkit.getPluginManager().getPlugins()) {
+            for (String dep: plugin.getDescription().getDepend()) {
+                if (dep.equalsIgnoreCase("natsbridge")) {
+                    scanPlugin(plugin);
+                }
+            }
+            for (String dep: plugin.getDescription().getSoftDepend()) {
+                if (dep.equalsIgnoreCase("natsbridge")) {
+                    scanPlugin(plugin);
+                }
             }
         }
     }

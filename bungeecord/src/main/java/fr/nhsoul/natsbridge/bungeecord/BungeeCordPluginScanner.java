@@ -32,12 +32,12 @@ public class BungeeCordPluginScanner implements Listener {
      * Scanne tous les plugins actuellement chargés.
      */
     public void scanAllPlugins() {
-        Plugin[] plugins = natsPlugin.getProxy().getPluginManager().getPlugins().toArray(new Plugin[0]);
+        //logger.info("Scanning " + plugins.length + " loaded plugins for @NatsSubscribe annotations");
 
-        logger.info("Scanning " + plugins.length + " loaded plugins for @NatsSubscribe annotations");
-
-        for (Plugin plugin : plugins) {
-            if (!plugin.equals(natsPlugin)) {
+        for (Plugin plugin : natsPlugin.getProxy().getPluginManager().getPlugins()) {
+            if (plugin.getDescription().getDepends().contains("NatsBridge") ||
+                    plugin.getDescription().getSoftDepends().contains("NatsBridge")) {
+                logger.info("[NatsBridge] Detected dependent BungeeCord plugin: " + plugin.getDescription().getName());
                 scanPlugin(plugin);
             }
         }

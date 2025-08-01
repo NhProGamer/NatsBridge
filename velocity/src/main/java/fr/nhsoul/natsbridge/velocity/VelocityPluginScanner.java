@@ -3,6 +3,7 @@ package fr.nhsoul.natsbridge.velocity;
 import com.velocitypowered.api.event.Subscribe;
 import com.velocitypowered.api.event.proxy.ProxyInitializeEvent;
 import com.velocitypowered.api.plugin.PluginContainer;
+import com.velocitypowered.api.plugin.meta.PluginDependency;
 import com.velocitypowered.api.proxy.ProxyServer;
 import fr.nhsoul.natsbridge.common.annotation.NatsSubscribe;
 import fr.nhsoul.natsbridge.core.NatsBridge;
@@ -11,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,14 +37,20 @@ public class VelocityPluginScanner {
      * Scanne tous les plugins actuellement chargés.
      */
     public void scanAllPlugins() {
-        logger.info("Scanning {} loaded plugins for @NatsSubscribe annotations",
-                server.getPluginManager().getPlugins().size());
-
         for (PluginContainer plugin : server.getPluginManager().getPlugins()) {
-            if (plugin.getInstance().isPresent() && !isnatsBridgePlugin(plugin)) {
-                scanPlugin(plugin);
+            Collection<PluginDependency> dependencies = plugin.getDescription().getDependencies();
+            for (PluginDependency dep : dependencies) {
+                if (dep.getId().equalsIgnoreCase("natsbridge")) {
+                    logger.info("[NatsBridge] Detected dependent Velocity plugin: {}", plugin.getDescription().getId());
+                    if (plugin.getInstance().isPresent() && !isnatsBridgePlugin(plugin)) {
+                        scanPlugin(plugin);
+                    }
+                    break;
+                }
             }
         }
+        /*logger.info("Scanning {} loaded plugins for @NatsSubscribe annotations",
+                server.getPluginManager().getPlugins().size());*/
     }
 
     /**
