@@ -16,18 +16,15 @@ public class NatsConfig {
     private final AuthConfig auth;
     private final TlsConfig tls;
     private final ReconnectConfig reconnect;
-    private final String loggingLevel;
 
     public NatsConfig(@NotNull List<String> servers,
                       @Nullable AuthConfig auth,
                       @Nullable TlsConfig tls,
-                      @NotNull ReconnectConfig reconnect,
-                      @NotNull String loggingLevel) {
+                      @NotNull ReconnectConfig reconnect) {
         this.servers = Objects.requireNonNull(servers, "servers cannot be null");
         this.auth = auth;
         this.tls = tls;
         this.reconnect = Objects.requireNonNull(reconnect, "reconnect config cannot be null");
-        this.loggingLevel = Objects.requireNonNull(loggingLevel, "logging level cannot be null");
     }
 
     @NotNull
@@ -48,11 +45,6 @@ public class NatsConfig {
     @NotNull
     public ReconnectConfig getReconnect() {
         return reconnect;
-    }
-
-    @NotNull
-    public String getLoggingLevel() {
-        return loggingLevel;
     }
 
     /**

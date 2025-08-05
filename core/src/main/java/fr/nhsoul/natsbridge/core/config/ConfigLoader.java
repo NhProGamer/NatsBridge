@@ -28,7 +28,6 @@ public class ConfigLoader {
     private static final int DEFAULT_MAX_RECONNECTS = -1; // Infini
     private static final long DEFAULT_RECONNECT_WAIT_MS = 2000;
     private static final long DEFAULT_CONNECTION_TIMEOUT_MS = 5000;
-    private static final String DEFAULT_LOGGING_LEVEL = "INFO";
 
     /**
      * Charge la configuration depuis un fichier.
@@ -99,8 +98,7 @@ public class ConfigLoader {
                 DEFAULT_SERVERS,
                 null, // Pas d'auth par défaut
                 null, // Pas de TLS par défaut
-                reconnect,
-                DEFAULT_LOGGING_LEVEL
+                reconnect
         );
     }
 
@@ -124,10 +122,7 @@ public class ConfigLoader {
         // Reconnexion
         NatsConfig.ReconnectConfig reconnect = parseReconnect(natsConfig);
 
-        // Niveau de log
-        String loggingLevel = parseString(natsConfig, "logging_level", DEFAULT_LOGGING_LEVEL);
-
-        return new NatsConfig(servers, auth, tls, reconnect, loggingLevel);
+        return new NatsConfig(servers, auth, tls, reconnect);
     }
 
     @SuppressWarnings("unchecked")
