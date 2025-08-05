@@ -30,6 +30,3 @@ nats:
     reconnect_wait: 2000
     # Timeout de connexion (en millisecondes)
     connection_timeout: 5000
-
-  # Niveau de logging (TRACE, DEBUG, INFO, WARN, ERROR)
-  logging_level: INFO
