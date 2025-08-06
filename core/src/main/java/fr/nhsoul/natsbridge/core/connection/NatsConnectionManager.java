@@ -166,7 +166,7 @@ public class NatsConnectionManager {
         NatsConfig.AuthConfig auth = config.getAuth();
         if (auth != null && auth.isEnabled()) {
             if (auth.getToken() != null) {
-                builder.token(auth.getToken());
+                builder.token(auth.getToken().toCharArray());
                 logger.debug("Using token authentication");
             } else if (auth.getUsername() != null && auth.getPassword() != null) {
                 builder.userInfo(auth.getUsername(), auth.getPassword());
