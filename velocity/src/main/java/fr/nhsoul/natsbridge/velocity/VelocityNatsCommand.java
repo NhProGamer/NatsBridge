@@ -18,6 +18,7 @@ public class VelocityNatsCommand implements SimpleCommand {
 
     private final VelocityNatsPlugin plugin;
     private final NatsBridge natsBridge;
+    private final String ADMIN_PERMISSION = "natsbridge.admin";
 
     public VelocityNatsCommand(@NotNull VelocityNatsPlugin plugin, @NotNull NatsBridge natsBridge) {
         this.plugin = plugin;
@@ -29,7 +30,7 @@ public class VelocityNatsCommand implements SimpleCommand {
         CommandSource source = invocation.source();
         String[] args = invocation.arguments();
 
-        if (!source.hasPermission("natsbridge.admin")) {
+        if (!source.hasPermission(ADMIN_PERMISSION)) {
             source.sendMessage(Component.text("You don't have permission to use this command.", NamedTextColor.RED));
             return;
         }
@@ -70,7 +71,7 @@ public class VelocityNatsCommand implements SimpleCommand {
     public List<String> suggest(@NotNull Invocation invocation) {
         String[] args = invocation.arguments();
 
-        if (!invocation.source().hasPermission("natsbridge.admin")) {
+        if (!invocation.source().hasPermission(ADMIN_PERMISSION)) {
             return List.of();
         }
 
@@ -91,7 +92,7 @@ public class VelocityNatsCommand implements SimpleCommand {
 
     @Override
     public boolean hasPermission(@NotNull Invocation invocation) {
-        return invocation.source().hasPermission("natsbridge.admin");
+        return invocation.source().hasPermission(ADMIN_PERMISSION);
     }
 
     private void sendHelp(@NotNull CommandSource source) {

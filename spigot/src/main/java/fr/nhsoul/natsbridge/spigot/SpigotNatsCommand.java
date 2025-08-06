@@ -20,6 +20,7 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
 
     private final SpigotNatsPlugin plugin;
     private final NatsBridge natsBridge;
+    private final String ADMIN_PERMISSION = "natsbridge.admin";
 
     public SpigotNatsCommand(@NotNull SpigotNatsPlugin plugin, @NotNull NatsBridge natsBridge) {
         this.plugin = plugin;
@@ -28,7 +29,7 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!sender.hasPermission("natsbridge.admin")) {
+        if (!sender.hasPermission(ADMIN_PERMISSION)) {
             sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return true;
         }
@@ -70,7 +71,7 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
     @Override
     @Nullable
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
-        if (!sender.hasPermission("natsbridge.admin")) {
+        if (!sender.hasPermission(ADMIN_PERMISSION)) {
             return null;
         }
 
