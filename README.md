@@ -94,10 +94,6 @@ nats:
     reconnect_wait: 2000
     # Connection timeout (in milliseconds)
     connection_timeout: 5000
-
-  # Logging level (TRACE, DEBUG, INFO, WARN, ERROR)
-  logging_level: INFO
-
 ```
 
 ## 🔧 Commands
