@@ -82,11 +82,11 @@ tasks.named("build") {
 publishing {
     repositories {
         maven {
-            name = "NhSoulRepo"
-            url = uri("https://repo.nhsoul.fr/releases")
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/NhProGamer/NatsBridge")
             credentials {
-                username = System.getenv("REPO_USERNAME")
-                password = System.getenv("REPO_SECRET")
+                username = System.getenv("GITHUB_ACTOR")
+                password = System.getenv("GITHUB_TOKEN")
             }
         }
     }
