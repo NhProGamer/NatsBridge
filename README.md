@@ -110,7 +110,7 @@ Permission required: `natsbridge.admin`
 repositories {
     maven {
         name = "natsbridge-repo"
-        url = uri("https://maven.pkg.github.com/NhProGamer/NatsBridge")
+        url = uri("https://repo.nhsoul.fr/releases")
     }
 }
 dependencies {
