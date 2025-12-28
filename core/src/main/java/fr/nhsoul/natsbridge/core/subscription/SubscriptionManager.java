@@ -215,13 +215,19 @@ public class SubscriptionManager {
             Object data = convertMessageData(message, handler.getMethod());
             handler.invoke(data);
 
-            logger.debug("Successfully processed message on subject '{}'", message.getSubject());
+            // Optimisation : vérifier le niveau de log avant de formater le message
+            if (logger.isDebugEnabled()) {
+                logger.debug("Successfully processed message on subject '{}'", message.getSubject());
+            }
 
         } catch (Exception e) {
-            logger.error("Error processing message on subject '{}' with handler {}.{}",
-                    message.getSubject(),
-                    handler.getPlugin().getClass().getSimpleName(),
-                    handler.getMethod().getName(), e);
+            // Optimisation : vérifier le niveau de log avant de formater le message
+            if (logger.isErrorEnabled()) {
+                logger.error("Error processing message on subject '{}' with handler {}.{}",
+                        message.getSubject(),
+                        handler.getPlugin().getClass().getSimpleName(),
+                        handler.getMethod().getName(), e);
+            }
         }
     }
 
