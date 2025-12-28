@@ -30,6 +30,7 @@ public class SubscriptionManager {
     private final Map<String, Dispatcher> subscriptions = new ConcurrentHashMap<>();
     private final Map<String, SubscriptionHandler> handlers = new ConcurrentHashMap<>();
     private final Map<Class<?>, Boolean> scannedClasses = new ConcurrentHashMap<>();
+    private final Map<String, Integer> subscriptionCounts = new ConcurrentHashMap<>();
     private final ExecutorService asyncExecutor;
 
     public SubscriptionManager(@NotNull NatsConnectionManager connectionManager) {
@@ -104,6 +105,9 @@ public class SubscriptionManager {
         SubscriptionHandler handler = new SubscriptionHandler(plugin, method, async);
         handlers.put(handlerKey, handler);
 
+        // Compter les souscriptions par sujet
+        subscriptionCounts.merge(subject, 1, Integer::sum);
+
         // S'abonner immédiatement si connecté, sinon attendre la connexion
         if (connectionManager.isConnected()) {
             subscribeToNats(subject, handler);
@@ -111,8 +115,8 @@ public class SubscriptionManager {
             logger.debug("NATS not connected yet, subscription for '{}' will be registered on connection", subject);
         }
 
-        logger.debug("Registered subscription handler for {}.{} on subject '{}'",
-                plugin.getClass().getSimpleName(), method.getName(), subject);
+        logger.debug("Registered subscription handler for {}.{} on subject '{}' (total: {})",
+                plugin.getClass().getSimpleName(), method.getName(), subject, subscriptionCounts.get(subject));
     }
 
     /**
@@ -180,6 +184,7 @@ public class SubscriptionManager {
         asyncExecutor.shutdown();
         handlers.clear();
         scannedClasses.clear();
+        subscriptionCounts.clear();
     }
 
     private void subscribeToNats(@NotNull String subject, @NotNull SubscriptionHandler handler) {
