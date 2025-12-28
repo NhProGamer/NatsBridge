@@ -34,7 +34,10 @@ public class SubscriptionManager {
 
     public SubscriptionManager(@NotNull NatsConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
-        this.asyncExecutor = Executors.newCachedThreadPool(new NatsThreadFactory());
+        // Utiliser un pool fixe au lieu d'un cache illimité pour éviter la création excessive de threads
+        int threadCount = Math.min(4, Runtime.getRuntime().availableProcessors());
+        this.asyncExecutor = Executors.newFixedThreadPool(threadCount, new NatsThreadFactory());
+        logger.debug("Initialized async executor with {} threads", threadCount);
     }
 
     /**
