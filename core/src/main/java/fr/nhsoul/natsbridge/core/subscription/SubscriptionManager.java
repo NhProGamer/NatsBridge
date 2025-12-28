@@ -29,6 +29,7 @@ public class SubscriptionManager {
     private final NatsConnectionManager connectionManager;
     private final Map<String, Dispatcher> subscriptions = new ConcurrentHashMap<>();
     private final Map<String, SubscriptionHandler> handlers = new ConcurrentHashMap<>();
+    private final Map<Class<?>, Boolean> scannedClasses = new ConcurrentHashMap<>();
     private final ExecutorService asyncExecutor;
 
     public SubscriptionManager(@NotNull NatsConnectionManager connectionManager) {
@@ -44,6 +45,13 @@ public class SubscriptionManager {
      */
     public void scanAndRegister(@NotNull Object plugin) {
         Class<?> clazz = plugin.getClass();
+        
+        // Éviter de scanner plusieurs fois la même classe
+        if (scannedClasses.containsKey(clazz)) {
+            logger.debug("Class {} already scanned, skipping", clazz.getSimpleName());
+            return;
+        }
+        
         logger.debug("Scanning plugin class {} for @NatsSubscribe annotations", clazz.getSimpleName());
 
         Method[] methods = clazz.getDeclaredMethods();
@@ -62,6 +70,9 @@ public class SubscriptionManager {
             }
         }
 
+        // Marquer la classe comme scannée
+        scannedClasses.put(clazz, true);
+        
         logger.info("Registered {} NATS subscriptions for plugin {}",
                 registeredCount, clazz.getSimpleName());
     }
@@ -165,6 +176,7 @@ public class SubscriptionManager {
         unsubscribeAll();
         asyncExecutor.shutdown();
         handlers.clear();
+        scannedClasses.clear();
     }
 
     private void subscribeToNats(@NotNull String subject, @NotNull SubscriptionHandler handler) {
