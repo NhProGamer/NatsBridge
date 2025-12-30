@@ -78,25 +78,33 @@ tasks.named("build") {
 }
 
 
-publishing {
-    repositories {
-        maven {
-            name = "NhSoulRepo"
-            url = uri("https://repo.nhsoul.fr/releases")
-            credentials {
-                username = System.getenv("REPO_USERNAME")
-                password = System.getenv("REPO_SECRET")
+subprojects { subproj ->
+    // Appliquer seulement si le module a le plugin Java (ou Java Library)
+    subproj.plugins.withType(JavaPlugin) {
+        subproj.apply plugin: 'maven-publish'
+
+        subproj.publishing {
+            repositories {
+                maven {
+                    name = "NhSoulRepo"
+                    url = uri("https://repo.nhsoul.fr/releases")
+                    credentials(PasswordCredentials) {
+                        username = System.getenv("REPO_USERNAME")
+                        password = System.getenv("REPO_SECRET")
+                    }
+                }
+            }
+            publications {
+                create("gpr", MavenPublication) {
+                    from subproj.components.java
+
+                    groupId = "fr.nhsoul.natsbridge"
+                    artifactId = subproj.name
+                    version = rootProject.findProperty("plugin.version")
+                }
             }
         }
     }
-    publications {
-        gpr(MavenPublication) {
-            from(components.java)
-
-            groupId = 'fr.nhsoul.natsbridge'
-            artifactId = 'natsbridge'
-            version = findProperty("plugin.version")
-        }
-    }
 }
+
 
