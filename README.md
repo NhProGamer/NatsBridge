@@ -30,7 +30,7 @@
 
 ```java
 @NatsSubscribe("subject")
-public void onSubject([String or byte[]] data) {
+public void onSubject(String or byte[] data) {
     System.out.println(data);
 }
 ```
@@ -114,7 +114,16 @@ repositories {
     }
 }
 dependencies {
-    compileOnly("fr.nhsoul.natsbridge:natsbridge:1.0.0") //Use the latest version
+    //Use the latest version
+    
+    // Mandadory
+    compileOnly("fr.nhsoul.natsbridge:core:1.0.0")
+    compileOnly("fr.nhsoul.natsbridge:common:1.0.0")
+    
+    //Select your platform
+    compileOnly("fr.nhsoul.natsbridge:spigot:1.0.0")
+    compileOnly("fr.nhsoul.natsbridge:velocity:1.0.0")
+    compileOnly("fr.nhsoul.natsbridge:bungeecord:1.0.0")
 }
 ```
 
