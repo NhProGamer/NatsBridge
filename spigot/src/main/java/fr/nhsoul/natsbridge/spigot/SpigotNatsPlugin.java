@@ -2,6 +2,7 @@ package fr.nhsoul.natsbridge.spigot;
 
 import fr.nhsoul.natsbridge.common.api.NatsAPI;
 import fr.nhsoul.natsbridge.core.NatsBridge;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -42,16 +43,16 @@ public class SpigotNatsPlugin extends JavaPlugin {
 
             // Démarrer NATS
             natsBridge.start().thenRun(() -> {
-                getLogger().info("NATS library started successfully");
+                Bukkit.getScheduler().runTask(this, () -> {
+                    getLogger().info("NATS library started successfully");
 
-                // Scanner les plugins déjà chargés
-                pluginScanner.scanAllPlugins();
+                    // Scanner les plugins déjà chargés
+                    pluginScanner.scanAllPlugins();
 
-                // Enregistrer les événements pour les nouveaux plugins
-                getServer().getPluginManager().registerEvents(pluginScanner, this);
-                getServer().getPluginManager().callEvent(new SpigotNatsBridgeConnectedEvent());
-
-
+                    // Enregistrer les événements pour les nouveaux plugins
+                    getServer().getPluginManager().registerEvents(pluginScanner, this);
+                    getServer().getPluginManager().callEvent(new SpigotNatsBridgeConnectedEvent());
+                });
             }).exceptionally(throwable -> {
                 getLogger().severe("Failed to start NATS library: " + throwable.getMessage());
                 getServer().getPluginManager().disablePlugin(this);
