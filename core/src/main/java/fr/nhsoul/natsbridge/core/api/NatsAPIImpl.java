@@ -1,14 +1,18 @@
 package fr.nhsoul.natsbridge.core.api;
 
+import fr.nhsoul.natsbridge.common.annotation.NatsSubscribe;
 import fr.nhsoul.natsbridge.common.api.NatsAPI;
 import fr.nhsoul.natsbridge.common.exception.NatsException;
 import fr.nhsoul.natsbridge.core.connection.NatsConnectionManager;
+import fr.nhsoul.natsbridge.core.subscription.SubscriptionManager;
 import io.nats.client.Connection;
+import io.nats.client.Dispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
@@ -20,9 +24,11 @@ public class NatsAPIImpl implements NatsAPI {
 
     private static final Logger logger = LoggerFactory.getLogger(NatsAPIImpl.class);
     private final NatsConnectionManager connectionManager;
+    private final SubscriptionManager subscriptionManager;
 
-    public NatsAPIImpl(@NotNull NatsConnectionManager connectionManager) {
+    public NatsAPIImpl(@NotNull NatsConnectionManager connectionManager, SubscriptionManager subscriptionManager) {
         this.connectionManager = connectionManager;
+        this.subscriptionManager = subscriptionManager;
     }
 
     @Override
@@ -66,6 +72,11 @@ public class NatsAPIImpl implements NatsAPI {
     @Override
     public CompletableFuture<Void> publishStringAsync(@NotNull String subject, @Nullable String data) {
         return CompletableFuture.runAsync(() -> publishString(subject, data));
+    }
+
+    @Override
+    public void subscribeSubject(@NotNull Object plugin, @NotNull Method method, @NotNull String subject, boolean async) {
+        subscriptionManager.registerSubscription(plugin, method, subject, async);
     }
 
     @Override

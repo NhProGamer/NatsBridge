@@ -3,6 +3,7 @@ package fr.nhsoul.natsbridge.common.api;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -46,6 +47,8 @@ public interface NatsAPI {
      * @return un CompletableFuture qui se complète quand le message est envoyé
      */
     CompletableFuture<Void> publishStringAsync(@NotNull String subject, @Nullable String data);
+
+    void subscribeSubject(@NotNull Object plugin, @NotNull Method method, @NotNull String subject, boolean async);
 
     /**
      * Vérifie si la connexion NATS est active et disponible.

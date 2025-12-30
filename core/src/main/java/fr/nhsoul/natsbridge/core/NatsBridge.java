@@ -36,7 +36,7 @@ public class NatsBridge {
         this.config = config;
         this.connectionManager = NatsConnectionManager.getInstance(config);
         this.subscriptionManager = new SubscriptionManager(connectionManager);
-        this.api = new NatsAPIImpl(connectionManager);
+        this.api = new NatsAPIImpl(connectionManager, subscriptionManager);
 
         logger.info("NatsBridge initialized with configuration: servers={}, auth={}, tls={}",
                 config.getServers(),

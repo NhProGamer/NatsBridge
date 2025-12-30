@@ -65,7 +65,7 @@ public class SubscriptionManager {
             NatsSubscribe annotation = method.getAnnotation(NatsSubscribe.class);
             if (annotation != null) {
                 try {
-                    registerSubscription(plugin, method, annotation);
+                    registerSubscription(plugin, method, annotation.value(), annotation.async());
                     registeredCount++;
                 } catch (Exception e) {
                     logger.error("Failed to register subscription for method {}.{}",
@@ -86,11 +86,10 @@ public class SubscriptionManager {
      *
      * @param plugin     l'instance contenant la méthode
      * @param method     la méthode à appeler
-     * @param annotation l'annotation contenant la configuration
+     * @param subject
+     * @param async
      */
-    public void registerSubscription(@NotNull Object plugin, @NotNull Method method, @NotNull NatsSubscribe annotation) {
-        String subject = annotation.value();
-        boolean async = annotation.async();
+    public void registerSubscription(@NotNull Object plugin, @NotNull Method method, @NotNull String subject, boolean async) {
 
         validateSubscriptionMethod(method);
 
