@@ -45,7 +45,7 @@ public class GeneratedSubscriptionsLoader {
                 if (line.isEmpty()) continue;
 
                 try {
-                    String[] parts = line.split("\|", 4);
+                    String[] parts = line.split("\\|", 4);
                     if (parts.length != 4) {
                         logger.warn("Invalid subscription line format: {}", line);
                         continue;

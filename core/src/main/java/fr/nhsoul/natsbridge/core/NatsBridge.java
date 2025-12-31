@@ -7,6 +7,7 @@ import fr.nhsoul.natsbridge.core.api.NatsAPIImpl;
 import fr.nhsoul.natsbridge.core.config.ConfigLoader;
 import fr.nhsoul.natsbridge.core.connection.NatsConnectionManager;
 import fr.nhsoul.natsbridge.core.subscription.SubscriptionManager;
+import fr.nhsoul.natsbridge.core.subscription.impl.DefaultSubscriptionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -35,7 +36,7 @@ public class NatsBridge {
     private NatsBridge(@NotNull NatsConfig config) {
         this.config = config;
         this.connectionManager = NatsConnectionManager.getInstance(config);
-        this.subscriptionManager = new SubscriptionManager(connectionManager);
+        this.subscriptionManager = new DefaultSubscriptionManager(connectionManager);
         this.api = new NatsAPIImpl(connectionManager, subscriptionManager);
 
         logger.info("NatsBridge initialized with configuration: servers={}, auth={}, tls={}",
