@@ -52,27 +52,6 @@ public interface NatsAPI {
     CompletableFuture<Void> publishStringAsync(@NotNull String subject, @Nullable String data);
 
     /**
-     * Souscrit un gestionnaire de messages Java à un sujet NATS.
-     * <p>
-     * La méthode fournie doit accepter exactement un paramètre, qui correspondra
-     * au payload décodé du message (par exemple {@code byte[]} ou {@code String}).
-     * L'implémentation se charge de l'enregistrement et du dispatch des messages
-     * vers cette méthode.
-     *
-     * @param classInstance  l'instance propriétaire, typiquement l'instance de la classe dans laquelle il y a la méthode
-     * @param method  la méthode Java à invoquer lors de la réception d'un message
-     * @param subject le sujet NATS sur lequel s'abonner
-     * @param async   {@code true} pour traiter les messages de manière asynchrone,
-     *                {@code false} pour un traitement synchrone
-     * @throws IllegalArgumentException si la méthode n'a pas la signature attendue
-     * @throws IllegalStateException    si la connexion NATS n'est pas disponible
-     */
-    void subscribeSubject(@NotNull Object classInstance,
-                          @NotNull Method method,
-                          @NotNull String subject,
-                          boolean async);
-
-    /**
      * Souscrit un Consumer à un sujet NATS pour un traitement bas niveau.
      * <p>
      * Cette méthode est plus performante que l'approche par annotation car elle évite

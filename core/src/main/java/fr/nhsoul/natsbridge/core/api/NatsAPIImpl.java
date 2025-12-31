@@ -76,11 +76,6 @@ public class NatsAPIImpl implements NatsAPI {
     }
 
     @Override
-    public void subscribeSubject(@NotNull Object classInstance, @NotNull Method method, @NotNull String subject, boolean async) {
-        subscriptionManager.registerSubscription(classInstance, method, subject, async);
-    }
-
-    @Override
     public void subscribeSubject(@NotNull String subject, @NotNull Consumer<byte[]> consumer, boolean async) {
         subscriptionManager.registerConsumerSubscription(subject, consumer, async);
     }
