@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * Implémentation thread-safe de l'API NATS.
@@ -77,6 +78,11 @@ public class NatsAPIImpl implements NatsAPI {
     @Override
     public void subscribeSubject(@NotNull Object classInstance, @NotNull Method method, @NotNull String subject, boolean async) {
         subscriptionManager.registerSubscription(classInstance, method, subject, async);
+    }
+
+    @Override
+    public void subscribeSubject(@NotNull String subject, @NotNull Consumer<byte[]> consumer, boolean async) {
+        subscriptionManager.registerConsumerSubscription(subject, consumer, async);
     }
 
     @Override

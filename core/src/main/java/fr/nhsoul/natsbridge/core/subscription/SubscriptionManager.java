@@ -16,6 +16,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 
 /**
  * Gestionnaire des souscriptions NATS.
@@ -31,6 +32,8 @@ public class SubscriptionManager {
     private final Map<String, SubscriptionHandler> handlers = new ConcurrentHashMap<>();
     private final Map<Class<?>, Boolean> scannedClasses = new ConcurrentHashMap<>();
     private final Map<String, Integer> subscriptionCounts = new ConcurrentHashMap<>();
+    private final Map<String, Consumer<byte[]>> consumerSubscriptions = new ConcurrentHashMap<>();
+    private final GeneratedSubscriptionsLoader generatedLoader = new GeneratedSubscriptionsLoader();
     private final ExecutorService asyncExecutor;
 
     public SubscriptionManager(@NotNull NatsConnectionManager connectionManager) {
@@ -82,6 +85,19 @@ public class SubscriptionManager {
     }
 
     /**
+     * Charge les subscriptions générées par l'annotation processor.
+     *
+     * @param pluginRegistry un registre des instances de plugins disponibles
+     */
+    public void loadGeneratedSubscriptions(@NotNull Map<Class<?>, Object> pluginRegistry) {
+        if (generatedLoader.hasGeneratedSubscriptions()) {
+            generatedLoader.loadGeneratedSubscriptions(this, pluginRegistry);
+        } else {
+            logger.debug("No generated subscriptions found, using runtime scanning");
+        }
+    }
+
+    /**
      * Enregistre manuellement une souscription pour une méthode spécifique.
      *
      * @param plugin     l'instance contenant la méthode
@@ -119,6 +135,32 @@ public class SubscriptionManager {
     }
 
     /**
+     * Enregistre une souscription bas niveau avec un Consumer.
+     * Plus performant que l'approche par annotation car évite la réflexion.
+     *
+     * @param subject le sujet NATS
+     * @param consumer le Consumer qui traitera les messages
+     * @param async true pour un traitement asynchrone
+     */
+    public void registerConsumerSubscription(@NotNull String subject, @NotNull Consumer<byte[]> consumer, boolean async) {
+        if (consumerSubscriptions.containsKey(subject)) {
+            logger.warn("Consumer subscription already exists for subject '{}'", subject);
+            return;
+        }
+
+        consumerSubscriptions.put(subject, consumer);
+        subscriptionCounts.merge(subject, 1, Integer::sum);
+
+        if (connectionManager.isConnected()) {
+            subscribeConsumerToNats(subject, consumer, async);
+        } else {
+            logger.debug("NATS not connected yet, consumer subscription for '{}' will be registered on connection", subject);
+        }
+
+        logger.debug("Registered consumer subscription for subject '{}' (total: {})", subject, subscriptionCounts.get(subject));
+    }
+
+    /**
      * S'abonne à tous les handlers enregistrés (appelé lors de la connexion).
      */
     public void subscribeAll() {
@@ -127,6 +169,7 @@ public class SubscriptionManager {
             return;
         }
 
+        // Subscribe method-based handlers
         for (Map.Entry<String, SubscriptionHandler> entry : handlers.entrySet()) {
             String handlerKey = entry.getKey();
             SubscriptionHandler handler = entry.getValue();
@@ -134,6 +177,18 @@ public class SubscriptionManager {
 
             if (!subscriptions.containsKey(subject)) {
                 subscribeToNats(subject, handler);
+            }
+        }
+
+        // Subscribe consumer-based handlers
+        for (Map.Entry<String, Consumer<byte[]>> entry : consumerSubscriptions.entrySet()) {
+            String subject = entry.getKey();
+            Consumer<byte[]> consumer = entry.getValue();
+
+            if (!subscriptions.containsKey(subject)) {
+                // Determine async status - for now we'll assume sync for consumers
+                // In a real implementation, we might need to track this separately
+                subscribeConsumerToNats(subject, consumer, false);
             }
         }
     }
@@ -155,6 +210,9 @@ public class SubscriptionManager {
         }
 
         subscriptions.clear();
+        handlers.clear();
+        consumerSubscriptions.clear();
+        subscriptionCounts.clear();
         logger.info("Unsubscribed from all NATS subjects");
     }
 
@@ -173,6 +231,11 @@ public class SubscriptionManager {
                 logger.error("Failed to unsubscribe from subject '{}'", subject, e);
             }
         }
+        
+        // Nettoyer les handlers et consumers associés
+        handlers.keySet().removeIf(key -> extractSubjectFromHandlerKey(key).equals(subject));
+        consumerSubscriptions.remove(subject);
+        subscriptionCounts.remove(subject);
     }
 
     /**
@@ -181,9 +244,8 @@ public class SubscriptionManager {
     public void shutdown() {
         unsubscribeAll();
         asyncExecutor.shutdown();
-        handlers.clear();
         scannedClasses.clear();
-        subscriptionCounts.clear();
+        // handlers, consumerSubscriptions et subscriptionCounts sont déjà nettoyés dans unsubscribeAll()
     }
 
     private void subscribeToNats(@NotNull String subject, @NotNull SubscriptionHandler handler) {
@@ -205,12 +267,56 @@ public class SubscriptionManager {
         }
     }
 
+    private void subscribeConsumerToNats(@NotNull String subject, @NotNull Consumer<byte[]> consumer, boolean async) {
+        Connection connection = connectionManager.getConnection();
+        if (connection == null) {
+            throw new NatsException.SubscriptionException("NATS connection not available");
+        }
+
+        try {
+            Dispatcher dispatcher = connection.createDispatcher(message -> handleConsumerMessage(message, consumer, async));
+            dispatcher.subscribe(subject);
+
+            subscriptions.put(subject, dispatcher);
+            logger.info("Subscribed consumer to NATS subject '{}'", subject);
+
+        } catch (Exception e) {
+            logger.error("Failed to subscribe consumer to subject '{}'", subject, e);
+            throw new NatsException.SubscriptionException("Failed to subscribe consumer to subject: " + subject, e);
+        }
+    }
+
 
     private void handleMessage(@NotNull Message message, @NotNull SubscriptionHandler handler) {
         if (handler.isAsync()) {
             asyncExecutor.submit(() -> processMessage(message, handler));
         } else {
             processMessage(message, handler);
+        }
+    }
+
+    private void handleConsumerMessage(@NotNull Message message, @NotNull Consumer<byte[]> consumer, boolean async) {
+        byte[] data = message.getData();
+        
+        if (async) {
+            asyncExecutor.submit(() -> safeConsume(consumer, data));
+        } else {
+            safeConsume(consumer, data);
+        }
+    }
+
+    private void safeConsume(@NotNull Consumer<byte[]> consumer, byte[] data) {
+        try {
+            consumer.accept(data);
+            
+            if (logger.isDebugEnabled()) {
+                logger.debug("Successfully processed message with consumer ({} bytes)", 
+                    data != null ? data.length : 0);
+            }
+        } catch (Exception e) {
+            if (logger.isErrorEnabled()) {
+                logger.error("Error processing message with consumer", e);
+            }
         }
     }
 

@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Method;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
 
 /**
  * Interface principale pour interagir avec NATS.
@@ -70,6 +71,22 @@ public interface NatsAPI {
                           @NotNull Method method,
                           @NotNull String subject,
                           boolean async);
+
+    /**
+     * Souscrit un Consumer à un sujet NATS pour un traitement bas niveau.
+     * <p>
+     * Cette méthode est plus performante que l'approche par annotation car elle évite
+     * la réflexion et permet un contrôle direct sur le traitement des messages.
+     *
+     * @param subject le sujet NATS sur lequel s'abonner
+     * @param consumer le Consumer qui traitera les messages (reçoit les données brutes en byte[])
+     * @param async   {@code true} pour traiter les messages de manière asynchrone,
+     *                {@code false} pour un traitement synchrone
+     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     */
+    void subscribeSubject(@NotNull String subject,
+                         @NotNull Consumer<byte[]> consumer,
+                         boolean async);
 
     /**
      * Annule l'abonnement actif sur un sujet NATS donné.
