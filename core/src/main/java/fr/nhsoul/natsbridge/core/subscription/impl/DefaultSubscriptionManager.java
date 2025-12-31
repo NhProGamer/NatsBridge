@@ -24,16 +24,17 @@ import java.util.function.Consumer;
 
 /**
  * Refactored SubscriptionManager that delegates responsibilities to specialized components.
- * <p>
- * This class now acts as a facade that coordinates between:
+ *
+ * <p>This class now acts as a facade that coordinates between:</p>
+ *
  * <ul>
  *   <li>SubscriptionRegistry - for subscription management</li>
  *   <li>SubscriptionDispatcher - for message dispatching</li>
  *   <li>SubscriptionLifecycleManager - for lifecycle management</li>
  * </ul>
- * </p>
  *
  * <h2>Design Improvements</h2>
+ *
  * <ul>
  *   <li>Single Responsibility Principle - each component has a clear responsibility</li>
  *   <li>Better Separation of Concerns - registry, dispatching, and lifecycle are separate</li>
@@ -41,6 +42,7 @@ import java.util.function.Consumer;
  *   <li>Enhanced Maintainability - clearer code organization</li>
  * </ul>
  */
+
 public class DefaultSubscriptionManager implements SubscriptionManager {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultSubscriptionManager.class);
