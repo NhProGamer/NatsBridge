@@ -178,6 +178,24 @@ public class DefaultSubscriptionManager implements SubscriptionManager {
     }
 
     @Override
+    public void registerStringSubject(@NotNull String subject,
+                                    @NotNull Consumer<String> consumer,
+                                    boolean async) {
+        // Convert String consumer to byte[] consumer
+        Consumer<byte[]> byteConsumer = data -> {
+            if (data == null) {
+                consumer.accept(null);
+            } else {
+                String message = new String(data, StandardCharsets.UTF_8);
+                consumer.accept(message);
+            }
+        };
+        
+        // Delegate to byte[] version
+        registerConsumerSubscription(subject, byteConsumer, async);
+    }
+
+    @Override
     public void loadGeneratedSubscriptions(@NotNull Map<Class<?>, Object> pluginRegistry) {
         // Try optimized loader first (JSON index from annotation processor)
         if (optimizedLoader.hasOptimizedIndex()) {

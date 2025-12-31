@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -307,5 +308,26 @@ public class DefaultSubscriptionRegistry implements SubscriptionRegistry {
                            pluginInstance.getClass().getName(),
                            method.getName(),
                            subject);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public void registerStringSubject(@NotNull String subject,
+                                    @NotNull Consumer<String> consumer,
+                                    boolean async) {
+        // Convert String consumer to byte[] consumer
+        Consumer<byte[]> byteConsumer = data -> {
+            if (data == null) {
+                consumer.accept(null);
+            } else {
+                String message = new String(data, StandardCharsets.UTF_8);
+                consumer.accept(message);
+            }
+        };
+        
+        // Delegate to byte[] version
+        registerConsumerSubscription(subject, byteConsumer, async);
     }
 }

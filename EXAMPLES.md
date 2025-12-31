@@ -86,6 +86,23 @@ public class HighPerformancePlugin extends JavaPlugin {
         getDatabase().updatePlayerData(playerData);
     }
 
+    // Alternative: String consumer for convenience
+    private void setupStringConsumers() {
+        // Much cleaner for text-based messages!
+        natsAPI.subscribeStringSubject("player.chat", this::handleChatMessage, false);
+        natsAPI.subscribeStringSubject("player.command", this::handleCommand, true);
+    }
+
+    private void handleChatMessage(String message) {
+        // Directly receive as String - no manual conversion needed
+        broadcastChatMessage(message);
+    }
+
+    private void handleCommand(String command) {
+        // Process command asynchronously
+        executeCommandAsync(command);
+    }
+
     private void handleAnalyticsEvent(byte[] data) {
         // Process analytics asynchronously
         AnalyticsEvent event = AnalyticsEvent.fromBytes(data);

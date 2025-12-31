@@ -86,6 +86,20 @@ public class NatsAPIImpl implements NatsAPI {
     }
 
     @Override
+    public void subscribeStringSubject(@NotNull String subject, @NotNull Consumer<String> consumer, boolean async) {
+        // Convert String consumer to byte[] consumer
+        Consumer<byte[]> byteConsumer = data -> {
+            if (data == null) {
+                consumer.accept(null);
+            } else {
+                String message = new String(data, StandardCharsets.UTF_8);
+                consumer.accept(message);
+            }
+        };
+        subscriptionManager.registerConsumerSubscription(subject, byteConsumer, async);
+    }
+
+    @Override
     public void unsubscribeSubject(@NotNull String subject) {
         subscriptionManager.unsubscribe(subject);
     }

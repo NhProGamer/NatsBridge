@@ -89,6 +89,22 @@ public interface NatsAPI {
                          boolean async);
 
     /**
+     * Souscrit un Consumer à un sujet NATS pour un traitement de messages texte.
+     * <p>
+     * Cette méthode est plus pratique que la version byte[] pour les cas courants
+     * où les messages sont des chaînes de caractères UTF-8.
+     *
+     * @param subject le sujet NATS sur lequel s'abonner
+     * @param consumer le Consumer qui traitera les messages (reçoit les messages comme String)
+     * @param async   {@code true} pour traiter les messages de manière asynchrone,
+     *                {@code false} pour un traitement synchrone
+     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     */
+    void subscribeStringSubject(@NotNull String subject,
+                               @NotNull Consumer<String> consumer,
+                               boolean async);
+
+    /**
      * Annule l'abonnement actif sur un sujet NATS donné.
      * <p>
      * Si aucun abonnement n'existe pour ce sujet, cet appel est sans effet.

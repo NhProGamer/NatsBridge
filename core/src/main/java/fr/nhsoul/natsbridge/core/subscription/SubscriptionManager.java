@@ -86,4 +86,19 @@ public interface SubscriptionManager {
      * Shuts down the subscription manager and cleans up resources.
      */
     void shutdown();
+
+    /**
+     * Registers a String-based consumer subscription.
+     * <p>
+     * This is a convenience method that automatically converts byte[] messages
+     * to String using UTF-8 encoding before passing them to the consumer.
+     * </p>
+     *
+     * @param subject the NATS subject to subscribe to
+     * @param consumer the consumer that will process incoming messages as String
+     * @param async whether to process messages asynchronously
+     */
+    void registerStringSubject(@NotNull String subject,
+                             @NotNull Consumer<String> consumer,
+                             boolean async);
 }

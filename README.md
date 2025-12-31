@@ -52,10 +52,16 @@ api.subscribeSubject("game.player.join", message -> {
     System.out.println("Player joined: " + playerName);
 }, false);
 
-// Async consumer
+// Async consumer (byte[])
 api.subscribeSubject("game.chat", message -> {
     // Process chat message asynchronously
     String chatMessage = new String(message, StandardCharsets.UTF_8);
+    broadcastToAllServers(chatMessage);
+}, true);
+
+// Async consumer (String) - more convenient!
+api.subscribeStringSubject("game.chat", chatMessage -> {
+    // Directly receive as String - no need for manual conversion
     broadcastToAllServers(chatMessage);
 }, true);
 ```
