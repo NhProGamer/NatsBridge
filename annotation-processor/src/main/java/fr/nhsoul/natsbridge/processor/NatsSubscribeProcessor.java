@@ -3,6 +3,8 @@ package fr.nhsoul.natsbridge.processor;
 import com.google.auto.service.AutoService;
 import fr.nhsoul.natsbridge.common.annotation.NatsSubscribe;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import javax.annotation.processing.*;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.*;
@@ -19,8 +21,9 @@ import java.util.*;
 @SupportedSourceVersion(SourceVersion.RELEASE_21)
 public class NatsSubscribeProcessor extends AbstractProcessor {
 
-    private static final String GENERATED_FILE = "META-INF/natsbridge/subscriptions.list";
-    private final Map<String, List<SubscriptionInfo>> subscriptions = new HashMap<>();
+    private static final String GENERATED_FILE = "META-INF/natsbridge/subscriptions.json";
+    private final List<SubscriptionInfo> subscriptions = new ArrayList<>();
+    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -52,9 +55,9 @@ public class NatsSubscribeProcessor extends AbstractProcessor {
             String methodName = method.getSimpleName().toString();
             String subject = annotation.value();
             boolean async = annotation.async();
+            String paramType = getParameterTypeName(method);
 
-            subscriptions.computeIfAbsent(className, k -> new ArrayList<>())
-                .add(new SubscriptionInfo(methodName, subject, async));
+            subscriptions.add(new SubscriptionInfo(className, methodName, paramType, subject, async));
         }
 
         // Generate the subscriptions list file
@@ -121,14 +124,12 @@ public class NatsSubscribeProcessor extends AbstractProcessor {
             );
 
             try (Writer writer = file.openWriter()) {
-                for (Map.Entry<String, List<SubscriptionInfo>> entry : subscriptions.entrySet()) {
-                    String className = entry.getKey();
-                    for (SubscriptionInfo info : entry.getValue()) {
-                        writer.write(className + "|" + info.methodName + "|" + 
-                                   info.subject + "|" + info.async + "\n");
-                    }
-                }
+                // Convert subscriptions to JSON
+                String json = gson.toJson(subscriptions);
+                writer.write(json);
             }
+
+            logger.info("Generated subscriptions index: {} subscriptions", subscriptions.size());
 
         } catch (IOException e) {
             processingEnv.getMessager().printMessage(
@@ -138,13 +139,36 @@ public class NatsSubscribeProcessor extends AbstractProcessor {
         }
     }
 
+    /**
+     * Gets the parameter type name for a method.
+     *
+     * @param method the method to inspect
+     * @return the parameter type name (e.g., "byte[]", "java.lang.String")
+     */
+    private String getParameterTypeName(ExecutableElement method) {
+        List<? extends VariableElement> parameters = method.getParameters();
+        if (parameters.isEmpty()) {
+            return "void";
+        }
+        
+        TypeMirror paramType = parameters.get(0).asType();
+        return paramType.toString();
+    }
+
+    /**
+     * Represents a subscription entry to be serialized to JSON.
+     */
     private static class SubscriptionInfo {
+        final String className;
         final String methodName;
+        final String paramType;
         final String subject;
         final boolean async;
 
-        SubscriptionInfo(String methodName, String subject, boolean async) {
+        SubscriptionInfo(String className, String methodName, String paramType, String subject, boolean async) {
+            this.className = className;
             this.methodName = methodName;
+            this.paramType = paramType;
             this.subject = subject;
             this.async = async;
         }

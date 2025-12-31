@@ -5,6 +5,7 @@ plugins {
 dependencies {
     implementation project(':common')
     implementation 'com.google.auto.service:auto-service:1.1.1'
+    implementation 'com.google.code.gson:gson:2.10.1'
     annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
 }
 

@@ -4,6 +4,7 @@ import fr.nhsoul.natsbridge.common.annotation.NatsSubscribe;
 import fr.nhsoul.natsbridge.common.exception.NatsException;
 import fr.nhsoul.natsbridge.core.connection.NatsConnectionManager;
 import fr.nhsoul.natsbridge.core.subscription.*;
+import fr.nhsoul.natsbridge.core.subscription.optimized.OptimizedSubscriptionLoader;
 import io.nats.client.Connection;
 import io.nats.client.Dispatcher;
 import io.nats.client.Message;
@@ -49,6 +50,7 @@ public class DefaultSubscriptionManager implements SubscriptionManager {
     private final SubscriptionDispatcher subscriptionDispatcher;
     private final SubscriptionLifecycleManager lifecycleManager;
     private final GeneratedSubscriptionsLoader generatedLoader;
+    private final OptimizedSubscriptionLoader optimizedLoader;
     
     // Connection management
     private final NatsConnectionManager connectionManager;
@@ -70,6 +72,7 @@ public class DefaultSubscriptionManager implements SubscriptionManager {
         this.subscriptionDispatcher = new DefaultSubscriptionDispatcher(this.subscriptionRegistry);
         this.lifecycleManager = new DefaultSubscriptionLifecycleManager(this.subscriptionRegistry);
         this.generatedLoader = new GeneratedSubscriptionsLoader();
+        this.optimizedLoader = new OptimizedSubscriptionLoader(this.subscriptionRegistry);
         
         // Initialize async executor with bounded thread pool
         int threadCount = Math.min(4, Runtime.getRuntime().availableProcessors());
@@ -176,6 +179,16 @@ public class DefaultSubscriptionManager implements SubscriptionManager {
 
     @Override
     public void loadGeneratedSubscriptions(@NotNull Map<Class<?>, Object> pluginRegistry) {
+        // Try optimized loader first (JSON index from annotation processor)
+        if (optimizedLoader.hasOptimizedIndex()) {
+            int loadedCount = optimizedLoader.loadSubscriptions(pluginRegistry);
+            if (loadedCount > 0) {
+                logger.info("Using optimized subscription loading: {} subscriptions loaded", loadedCount);
+                return;
+            }
+        }
+
+        // Fallback to generated subscriptions loader (legacy format)
         if (generatedLoader.hasGeneratedSubscriptions()) {
             generatedLoader.loadGeneratedSubscriptions(this, pluginRegistry);
         } else {
