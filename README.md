@@ -6,11 +6,9 @@
 
 * ✅ Shared NATS **connection** across plugins
 * ✅ Supports **Spigot/Paper**, **Velocity**, and **BungeeCord**
-* ✅ Simple `@NatsSubscribe` annotation for message listeners (compile-time processed!)
-* ✅ **High-performance Consumer API** for low-level message handling
+* ✅ **High-performance Consumer API** for message handling
 * ✅ Clean API to **publish** messages
 * ✅ **Auto-reconnect** & error handling
-* ✅ **Plugin auto-scanning** with annotation processor
 * ✅ **YAML configuration**
 * ✅ TLS & authentication support
 * ✅ Sync & async message handling
@@ -27,22 +25,7 @@
 
 ## ⚙️ Usage Example
 
-### Option 1: Using @NatsSubscribe annotation (compile-time processed)
-
-```java
-@NatsSubscribe("game.player.join")
-public void onPlayerJoin(String message) {
-    System.out.println("Player joined: " + message);
-}
-
-@NatsSubscribe(value = "game.chat", async = true)
-public void onChatMessage(byte[] data) {
-    String message = new String(data, StandardCharsets.UTF_8);
-    System.out.println("Chat: " + message);
-}
-```
-
-### Option 2: Using high-performance Consumer API
+### Using high-performance Consumer API
 
 ```java
 // Sync consumer
@@ -129,9 +112,10 @@ nats:
 
 ## 🔧 Commands
 
+* `/nats help` – Show help menu
 * `/nats status` – Check NATS connection status
 * `/nats test <subject> <message>` – Send a test message
-* `/nats rescan` – Rescan all plugins for subscribers
+* `/nats reload` – Reload NATS configuration (planned)
 
 Permission required: `natsbridge.admin`
 
@@ -151,9 +135,6 @@ dependencies {
     compileOnly("fr.nhsoul.natsbridge:core:1.0.0")
     compileOnly("fr.nhsoul.natsbridge:common:1.0.0")
     
-    // Annotation processor (for compile-time @NatsSubscribe processing)
-    annotationProcessor("fr.nhsoul.natsbridge:annotation-processor:1.0.0")
-    
     //Select your platform
     compileOnly("fr.nhsoul.natsbridge:spigot:1.0.0")
     compileOnly("fr.nhsoul.natsbridge:velocity:1.0.0")
@@ -163,18 +144,12 @@ dependencies {
 
 ## 🧩 Performance Considerations
 
-The annotation processor approach offers several advantages:
+The Consumer API approach offers several advantages:
 
-1. **Faster startup**: Subscriptions are processed at compile-time, not runtime
-2. **Better performance**: Consumer API avoids reflection overhead
-3. **Type safety**: Compile-time validation of @NatsSubscribe methods
-4. **Backward compatibility**: Existing code continues to work
-
-### When to use which approach:
-
-- **Use @NatsSubscribe** for simple, declarative message handling
-- **Use Consumer API** for high-performance scenarios or complex processing
-- **Mix both** approaches as needed in your application
+1. **No reflection overhead**: Native performance for message handling.
+2. **Type safety**: Use of standard Java interfaces.
+3. **Explicit control**: You control exactly when and how messages are processed.
+4. **Platform integration**: Easy access to platform-specific APIs (Spigot, Velocity, BungeeCord).
 
 ## ✅ Requirements
 
