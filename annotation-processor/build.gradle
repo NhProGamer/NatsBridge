@@ -1,5 +1,6 @@
 plugins {
     id 'java-library'
+    id 'java'
 }
 
 dependencies {
@@ -14,5 +15,5 @@ java {
 }
 
 tasks.withType(JavaCompile) {
-    options.compilerArgs += ['-proc:only']
+    //options.compilerArgs += ['-proc:only']
 }
