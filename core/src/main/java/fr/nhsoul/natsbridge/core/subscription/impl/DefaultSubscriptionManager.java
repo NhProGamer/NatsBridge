@@ -1,9 +1,9 @@
 package fr.nhsoul.natsbridge.core.subscription.impl;
 
 import fr.nhsoul.natsbridge.common.annotation.NatsSubscribe;
-import fr.nhsoul.natsbridge.common.exception.NatsException;
 import fr.nhsoul.natsbridge.core.connection.NatsConnectionManager;
-import fr.nhsoul.natsbridge.core.subscription.*;
+import fr.nhsoul.natsbridge.core.subscription.GeneratedSubscriptionsLoader;
+import fr.nhsoul.natsbridge.core.subscription.SubscriptionManager;
 import fr.nhsoul.natsbridge.core.subscription.optimized.OptimizedSubscriptionLoader;
 import io.nats.client.Connection;
 import io.nats.client.Dispatcher;
@@ -12,87 +12,53 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
- * Refactored SubscriptionManager that delegates responsibilities to specialized components.
- *
- * <p>This class now acts as a facade that coordinates between:</p>
- *
- * <ul>
- *   <li>SubscriptionRegistry - for subscription management</li>
- *   <li>SubscriptionDispatcher - for message dispatching</li>
- *   <li>SubscriptionLifecycleManager - for lifecycle management</li>
- * </ul>
- *
- * <h2>Design Improvements</h2>
- *
- * <ul>
- *   <li>Single Responsibility Principle - each component has a clear responsibility</li>
- *   <li>Better Separation of Concerns - registry, dispatching, and lifecycle are separate</li>
- *   <li>Improved Testability - components can be mocked and tested independently</li>
- *   <li>Enhanced Maintainability - clearer code organization</li>
- * </ul>
+ * Implementation simplifiée de SubscriptionManager utilisant directement jnats.
+ * Optimisée avec MethodHandles pour l'invocation des handlers.
  */
-
 public class DefaultSubscriptionManager implements SubscriptionManager {
 
     private static final Logger logger = LoggerFactory.getLogger(DefaultSubscriptionManager.class);
 
-    // Delegated components
-    private final SubscriptionRegistry subscriptionRegistry;
-    private final SubscriptionDispatcher subscriptionDispatcher;
-    private final SubscriptionLifecycleManager lifecycleManager;
+    private final NatsConnectionManager connectionManager;
     private final GeneratedSubscriptionsLoader generatedLoader;
     private final OptimizedSubscriptionLoader optimizedLoader;
-    
-    // Connection management
-    private final NatsConnectionManager connectionManager;
-    
-    // Active NATS subscriptions (subject -> Dispatcher)
-    private final Map<String, Dispatcher> activeSubscriptions = new ConcurrentHashMap<>();
-    
-    // Async execution
-    private final ExecutorService asyncExecutor;
 
-    /**
-     * Creates a new SubscriptionManager with the specified connection manager.
-     *
-     * @param connectionManager the NATS connection manager
-     */
+    // Maintain a list of registered subscription definitions to re-apply on
+    // connect/reconnect
+    private final List<SubscriptionDefinition> registeredSubscriptions = new CopyOnWriteArrayList<>();
+
+    // Active dispatcher (recreated on connection)
+    private volatile Dispatcher dispatcher;
+
+    // Track processed classes
+    private final Collection<Class<?>> scannedClasses = ConcurrentHashMap.newKeySet();
+
+    // Lookup for MethodHandles
+    private final MethodHandles.Lookup lookup = MethodHandles.lookup();
+
     public DefaultSubscriptionManager(@NotNull NatsConnectionManager connectionManager) {
         this.connectionManager = connectionManager;
-        this.subscriptionRegistry = new DefaultSubscriptionRegistry();
-        this.subscriptionDispatcher = new DefaultSubscriptionDispatcher(this.subscriptionRegistry);
-        this.lifecycleManager = new DefaultSubscriptionLifecycleManager(this.subscriptionRegistry);
         this.generatedLoader = new GeneratedSubscriptionsLoader();
-        this.optimizedLoader = new OptimizedSubscriptionLoader(this.subscriptionRegistry);
-        
-        // Initialize async executor with bounded thread pool
-        int threadCount = Math.min(4, Runtime.getRuntime().availableProcessors());
-        this.asyncExecutor = Executors.newFixedThreadPool(threadCount, new NatsThreadFactory());
-        
-        logger.info("Initialized SubscriptionManager with {} async threads", threadCount);
+        this.optimizedLoader = new OptimizedSubscriptionLoader(this);
     }
-
-    // ========================================================================
-    // Public API - Subscription Management
-    // ========================================================================
 
     @Override
     public void scanAndRegister(@NotNull Object plugin) {
         Class<?> clazz = plugin.getClass();
-        
-        // Check if already scanned
-        if (subscriptionRegistry.isClassScanned(clazz)) {
+
+        if (!scannedClasses.add(clazz)) {
             logger.debug("Class {} already scanned, skipping", clazz.getSimpleName());
             return;
         }
@@ -110,259 +76,141 @@ public class DefaultSubscriptionManager implements SubscriptionManager {
                     registeredCount++;
                 } catch (Exception e) {
                     logger.error("Failed to register subscription for method {}.{}",
-                                clazz.getSimpleName(), method.getName(), e);
+                            clazz.getSimpleName(), method.getName(), e);
                 }
             }
         }
 
-        // Mark class as scanned
-        subscriptionRegistry.markClassAsScanned(clazz);
-        
         logger.info("Registered {} NATS subscriptions for plugin {}",
-                   registeredCount, clazz.getSimpleName());
+                registeredCount, clazz.getSimpleName());
     }
 
     @Override
     public void registerSubscription(@NotNull Object pluginInstance,
-                                   @NotNull Method method,
-                                   @NotNull String subject,
-                                   boolean async) {
-        try {
-            subscriptionRegistry.registerMethodSubscription(pluginInstance, method, subject, async);
-            
-            // Register with lifecycle manager for automatic connection handling
-            lifecycleManager.registerManagedSubscription(
-                subject,
-                subscriptionRegistry.getMethodHandler(subject),
-                null, // No consumer for method-based subscriptions
-                async
-            );
-            
-            // Subscribe immediately if connected
-            if (connectionManager.isConnected()) {
-                subscribeToNats(subject);
-            }
+            @NotNull Method method,
+            @NotNull String subject,
+            boolean async) {
 
-        } catch (Exception e) {
-            logger.error("Failed to register method subscription for subject '{}'", subject, e);
-            throw new NatsException.SubscriptionException(
-                "Failed to register subscription: " + subject, e
-            );
+        try {
+            method.setAccessible(true);
+            MethodHandle handle = lookup.unreflect(method).bindTo(pluginInstance);
+            Class<?>[] paramTypes = method.getParameterTypes();
+            boolean isStringParam = paramTypes.length == 1 && paramTypes[0] == String.class;
+
+            SubscriptionDefinition def = new SubscriptionDefinition(subject, msg -> {
+                try {
+                    if (isStringParam) {
+                        handle.invoke(new String(msg.getData(), StandardCharsets.UTF_8));
+                    } else {
+                        handle.invoke(msg.getData());
+                    }
+                } catch (Throwable e) {
+                    logger.error("Error processing NATS message for subject {}", subject, e);
+                }
+            });
+
+            addSubscription(def);
+
+        } catch (IllegalAccessException e) {
+            logger.error("Failed to access method for subscription: {}", method.getName(), e);
         }
     }
 
     @Override
     public void registerConsumerSubscription(@NotNull String subject,
-                                           @NotNull Consumer<byte[]> consumer,
-                                           boolean async) {
-        try {
-            subscriptionRegistry.registerConsumerSubscription(subject, consumer, async);
-            
-            // Register with lifecycle manager
-            lifecycleManager.registerManagedSubscription(
-                subject,
-                null, // No handler for consumer-based subscriptions
-                consumer,
-                async
-            );
-            
-            // Subscribe immediately if connected
-            if (connectionManager.isConnected()) {
-                subscribeToNats(subject);
+            @NotNull Consumer<byte[]> consumer,
+            boolean async) {
+        SubscriptionDefinition def = new SubscriptionDefinition(subject, msg -> {
+            try {
+                consumer.accept(msg.getData());
+            } catch (Exception e) {
+                logger.error("Error processing NATS message for subject {}", subject, e);
             }
+        });
 
-        } catch (Exception e) {
-            logger.error("Failed to register consumer subscription for subject '{}'", subject, e);
-            throw new NatsException.SubscriptionException(
-                "Failed to register consumer subscription: " + subject, e
-            );
-        }
+        addSubscription(def);
     }
 
     @Override
     public void registerStringSubject(@NotNull String subject,
-                                    @NotNull Consumer<String> consumer,
-                                    boolean async) {
-        // Convert String consumer to byte[] consumer
-        Consumer<byte[]> byteConsumer = data -> {
-            if (data == null) {
-                consumer.accept(null);
-            } else {
-                String message = new String(data, StandardCharsets.UTF_8);
-                consumer.accept(message);
-            }
-        };
-        
-        // Delegate to byte[] version
-        registerConsumerSubscription(subject, byteConsumer, async);
+            @NotNull Consumer<String> consumer,
+            boolean async) {
+        registerConsumerSubscription(subject,
+                bytes -> consumer.accept(new String(bytes, StandardCharsets.UTF_8)),
+                async);
+    }
+
+    private void addSubscription(SubscriptionDefinition def) {
+        registeredSubscriptions.add(def);
+        // If already connected and dispatcher exists, subscribe immediately
+        if (dispatcher != null && dispatcher.isActive()) {
+            dispatcher.subscribe(def.subject, def.handler);
+        }
     }
 
     @Override
     public void loadGeneratedSubscriptions(@NotNull Map<Class<?>, Object> pluginRegistry) {
-        // Try optimized loader first (JSON index from annotation processor)
         if (optimizedLoader.hasOptimizedIndex()) {
-            int loadedCount = optimizedLoader.loadSubscriptions(pluginRegistry);
-            if (loadedCount > 0) {
-                logger.info("Using optimized subscription loading: {} subscriptions loaded", loadedCount);
-                return;
-            }
-        }
-
-        // Fallback to generated subscriptions loader (legacy format)
-        if (generatedLoader.hasGeneratedSubscriptions()) {
+            optimizedLoader.loadSubscriptions(pluginRegistry);
+        } else if (generatedLoader.hasGeneratedSubscriptions()) {
             generatedLoader.loadGeneratedSubscriptions(this, pluginRegistry);
-        } else {
-            logger.debug("No generated subscriptions found, using runtime scanning");
         }
     }
 
-    // ========================================================================
-    // Public API - Lifecycle Management
-    // ========================================================================
-
     @Override
     public void subscribeAll() {
-        if (!connectionManager.isConnected()) {
-            logger.warn("Cannot subscribe to NATS subjects: not connected");
+        Connection conn = connectionManager.getConnection();
+        if (conn == null || conn.getStatus() != Connection.Status.CONNECTED) {
+            logger.warn("Cannot subscribe: NATS not connected");
             return;
         }
 
-        // Delegate to lifecycle manager
-        lifecycleManager.activateAllSubscriptions();
+        // Create a new dispatcher
+        this.dispatcher = conn.createDispatcher(msg -> {
+        });
+
+        for (SubscriptionDefinition def : registeredSubscriptions) {
+            try {
+                this.dispatcher.subscribe(def.subject, def.handler);
+                logger.debug("Subscribed to {}", def.subject);
+            } catch (Exception e) {
+                logger.error("Failed to subscribe to {}", def.subject, e);
+            }
+        }
+        logger.info("Activated {} subscriptions", registeredSubscriptions.size());
     }
 
     @Override
     public void unsubscribe(@NotNull String subject) {
-        try {
-            // Unsubscribe from NATS
-            Dispatcher dispatcher = activeSubscriptions.remove(subject);
-            if (dispatcher != null) {
-                dispatcher.unsubscribe(subject);
-            }
-
-            // Unregister from registry
-            subscriptionRegistry.unregisterSubscription(subject);
-
-            logger.debug("Unsubscribed from subject '{}'", subject);
-
-        } catch (Exception e) {
-            logger.error("Failed to unsubscribe from subject '{}'", subject, e);
+        if (dispatcher != null && dispatcher.isActive()) {
+            dispatcher.unsubscribe(subject);
         }
+        registeredSubscriptions.removeIf(def -> def.subject.equals(subject));
     }
 
     @Override
     public void unsubscribeAll() {
-        // Unsubscribe all active subscriptions
-        for (Map.Entry<String, Dispatcher> entry : activeSubscriptions.entrySet()) {
-            try {
-                entry.getValue().unsubscribe(entry.getKey());
-            } catch (Exception e) {
-                logger.error("Failed to unsubscribe from subject '{}'", entry.getKey(), e);
+        if (dispatcher != null && dispatcher.isActive()) {
+            for (SubscriptionDefinition def : registeredSubscriptions) {
+                dispatcher.unsubscribe(def.subject);
             }
         }
-
-        activeSubscriptions.clear();
-        subscriptionRegistry.unregisterAll();
-        
-        logger.info("Unsubscribed from all NATS subjects");
+        registeredSubscriptions.clear();
+        scannedClasses.clear();
     }
 
     @Override
     public void shutdown() {
-        logger.info("Shutting down SubscriptionManager...");
-        
-        // Stop dispatcher
-        subscriptionDispatcher.stop();
-        
-        // Shutdown lifecycle manager
-        lifecycleManager.shutdown();
-        
-        // Clean up resources
         unsubscribeAll();
-        asyncExecutor.shutdown();
-        
-        logger.info("SubscriptionManager shutdown complete");
     }
 
-    // ========================================================================
-    // Internal Implementation - NATS Subscription Management
-    // ========================================================================
+    private static class SubscriptionDefinition {
+        final String subject;
+        final io.nats.client.MessageHandler handler;
 
-    /**
-     * Subscribes to a NATS subject if not already subscribed.
-     *
-     * @param subject the subject to subscribe to
-     */
-    private void subscribeToNats(@NotNull String subject) {
-        if (activeSubscriptions.containsKey(subject)) {
-            logger.debug("Already subscribed to subject '{}'", subject);
-            return;
-        }
-
-        try {
-            Connection connection = connectionManager.getConnection();
-            if (connection == null) {
-                throw new NatsException.SubscriptionException("NATS connection not available");
-            }
-
-            // Create dispatcher based on subscription type
-            Dispatcher dispatcher = createDispatcherForSubject(subject);
-            dispatcher.subscribe(subject);
-
-            activeSubscriptions.put(subject, dispatcher);
-            logger.info("Subscribed to NATS subject '{}'", subject);
-
-        } catch (Exception e) {
-            logger.error("Failed to subscribe to subject '{}'", subject, e);
-            throw new NatsException.SubscriptionException(
-                "Failed to subscribe to subject: " + subject, e
-            );
-        }
-    }
-
-    /**
-     * Creates an appropriate dispatcher for a subject based on subscription type.
-     *
-     * @param subject the subject to create dispatcher for
-     * @return the configured dispatcher
-     */
-    private Dispatcher createDispatcherForSubject(@NotNull String subject) {
-        Connection connection = connectionManager.getConnection();
-        
-        if (subscriptionRegistry.getMethodHandler(subject) != null) {
-            // Method-based subscription
-            SubscriptionHandler handler = subscriptionRegistry.getMethodHandler(subject);
-            return connection.createDispatcher(message -> 
-                subscriptionDispatcher.dispatch(message)
-            );
-        } else if (subscriptionRegistry.getConsumer(subject) != null) {
-            // Consumer-based subscription
-            return connection.createDispatcher(message -> 
-                subscriptionDispatcher.dispatch(message)
-            );
-        } else {
-            throw new IllegalStateException("No handler or consumer found for subject: " + subject);
-        }
-    }
-
-    // ========================================================================
-    // Thread Factory for Async Processing
-    // ========================================================================
-
-    /**
-     * Thread factory for creating named threads for async message processing.
-     */
-    private static class NatsThreadFactory implements ThreadFactory {
-        private final AtomicInteger threadNumber = new AtomicInteger(1);
-
-        @Override
-        public Thread newThread(@NotNull Runnable r) {
-            Thread thread = new Thread(r, "nats-async-handler-" + threadNumber.getAndIncrement());
-            thread.setDaemon(true);
-            thread.setUncaughtExceptionHandler((t, e) -> 
-                logger.error("Uncaught exception in NATS async handler thread {}", t.getName(), e)
-            );
-            return thread;
+        SubscriptionDefinition(String subject, io.nats.client.MessageHandler handler) {
+            this.subject = subject;
+            this.handler = handler;
         }
     }
 }
