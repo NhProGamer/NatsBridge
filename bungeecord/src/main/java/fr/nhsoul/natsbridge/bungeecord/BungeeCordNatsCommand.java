@@ -54,6 +54,7 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
                 reloadConfig(sender);
                 break;
 
+            case "help":
             default:
                 sendHelp(sender);
                 break;
@@ -67,7 +68,7 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
         }
 
         if (args.length == 1) {
-            return Arrays.asList("status", "test", "reload")
+            return Arrays.asList("status", "test", "reload", "help")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -82,6 +83,7 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
 
     private void sendHelp(@NotNull CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "=== NatsBridge Commands ===");
+        sender.sendMessage(ChatColor.YELLOW + "/nats help" + ChatColor.WHITE + " - Show this help menu");
         sender.sendMessage(ChatColor.YELLOW + "/nats status" + ChatColor.WHITE + " - Show NATS connection status");
         sender.sendMessage(
                 ChatColor.YELLOW + "/nats test <subject> <message>" + ChatColor.WHITE + " - Send a test message");

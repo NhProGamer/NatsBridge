@@ -57,6 +57,7 @@ public class VelocityNatsCommand implements SimpleCommand {
                 reloadConfig(source);
                 break;
 
+            case "help":
             default:
                 sendHelp(source);
                 break;
@@ -73,7 +74,7 @@ public class VelocityNatsCommand implements SimpleCommand {
 
         if (args.length <= 1) {
             String partial = args.length > 0 ? args[0].toLowerCase() : "";
-            return Arrays.asList("status", "test", "reload")
+            return Arrays.asList("status", "test", "reload", "help")
                     .stream()
                     .filter(s -> s.startsWith(partial))
                     .collect(Collectors.toList());
@@ -93,6 +94,8 @@ public class VelocityNatsCommand implements SimpleCommand {
 
     private void sendHelp(@NotNull CommandSource source) {
         source.sendMessage(Component.text("=== NatsBridge Commands ===", NamedTextColor.GOLD));
+        source.sendMessage(Component.text("/nats help", NamedTextColor.YELLOW)
+                .append(Component.text(" - Show this help menu", NamedTextColor.WHITE)));
         source.sendMessage(Component.text("/nats status", NamedTextColor.YELLOW)
                 .append(Component.text(" - Show NATS connection status", NamedTextColor.WHITE)));
         source.sendMessage(Component.text("/nats test <subject> <message>", NamedTextColor.YELLOW)
