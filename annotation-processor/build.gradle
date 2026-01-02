@@ -1,17 +1,10 @@
-plugins {
-    id 'java-library'
-    id 'java'
-}
+// Appliquer les configurations de versions centralisées
+apply from: rootProject.file('gradle/versions.gradle')
 
 dependencies {
     implementation project(':common')
-    implementation 'com.google.auto.service:auto-service:1.1.1'
-    annotationProcessor 'com.google.auto.service:auto-service:1.1.1'
-}
-
-java {
-    sourceCompatibility = JavaVersion.VERSION_21
-    targetCompatibility = JavaVersion.VERSION_21
+    implementation rootProject.ext.deps.autoService
+    annotationProcessor rootProject.ext.deps.autoService
 }
 
 tasks.withType(JavaCompile) {

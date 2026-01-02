@@ -4,7 +4,8 @@ plugins {
     id 'maven-publish'
 }
 
-def javaVersion = findProperty("java.version")?.toString()?.toInteger()
+// Appliquer les configurations de versions centralisées
+apply from: 'gradle/versions.gradle'
 
 allprojects {
     group = 'fr.nhsoul.natsbridge'
@@ -17,46 +18,26 @@ allprojects {
     }
 }
 
+// Appliquer les plugins de base à tous les sous-projets
 subprojects {
     apply plugin: 'java'
     apply plugin: 'java-library'
-
-    java {
-        toolchain.languageVersion = JavaLanguageVersion.of(javaVersion)
-        withSourcesJar()
-        withJavadocJar()
-    }
-
-    dependencies {
-        // NATS client library
-        implementation 'io.nats:jnats:2.17.2'
-
-        // Logging
-        implementation 'org.slf4j:slf4j-api:2.0.9'
-
-        // Configuration (YAML)
-        implementation 'org.yaml:snakeyaml:2.2'
-
-        // Testing
-        testImplementation 'org.junit.jupiter:junit-jupiter:5.10.1'
-        testImplementation 'org.mockito:mockito-core:5.7.0'
-    }
-
-    tasks.named('test') {
-        useJUnitPlatform()
-    }
-
-    compileJava {
-        options.encoding = 'UTF-8'
-        options.release = javaVersion
-    }
-
-    compileTestJava {
-        options.encoding = 'UTF-8'
-        options.release = javaVersion
-    }
+    apply from: rootProject.file('gradle/convention-plugins/java-library.gradle')
 }
 
+// Configuration pour le projet racine (shadowJar)
+shadowJar {
+    archiveBaseName.set("NatsBridge")
+    archiveClassifier.set("") // pas de "-all"
+    archiveVersion.set(version)
+    mergeServiceFiles() // si META-INF/services utilisés
+}
+
+tasks.named("build") {
+    dependsOn(tasks.named("shadowJar"))
+}
+
+// Configuration des dépendances entre modules
 dependencies {
     implementation project(":common")
     implementation project(":core")
@@ -65,45 +46,12 @@ dependencies {
     implementation project(':bungeecord')
 }
 
-shadowJar {
-    archiveBaseName.set("NatsBridge")
-    archiveClassifier.set("") // pas de "-all"
-    archiveVersion.set(version)
-
-    mergeServiceFiles() // si META-INF/services utilisés
-}
-
-tasks.named("build") {
-    dependsOn(tasks.named("shadowJar"))
-}
-
-
+// Configuration de publication pour les sous-projets
 subprojects { subproj ->
-    // Appliquer seulement si le module a le plugin Java (ou Java Library)
+    // Appliquer la publication Maven aux projets Java
     subproj.plugins.withType(JavaPlugin) {
         subproj.apply plugin: 'maven-publish'
-
-        subproj.publishing {
-            repositories {
-                maven {
-                    name = "NhSoulRepo"
-                    url = uri("https://repo.nhsoul.fr/releases")
-                    credentials(PasswordCredentials) {
-                        username = System.getenv("REPO_USERNAME")
-                        password = System.getenv("REPO_SECRET")
-                    }
-                }
-            }
-            publications {
-                create("gpr", MavenPublication) {
-                    from subproj.components.java
-
-                    groupId = "fr.nhsoul.natsbridge"
-                    artifactId = subproj.name
-                    version = rootProject.findProperty("plugin.version")
-                }
-            }
-        }
+        subproj.apply from: rootProject.file('gradle/convention-plugins/maven-publish.gradle')
     }
 }
 

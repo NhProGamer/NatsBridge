@@ -1,0 +1,32 @@
+// Configuration Java commune (sans bloc plugins)
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(rootProject.ext.javaVersion)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+    options.release = rootProject.ext.javaVersion
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+dependencies {
+    // NATS client library
+    implementation rootProject.ext.deps.jnats
+
+    // Logging
+    compileOnly rootProject.ext.deps.slf4j
+
+    // Configuration (YAML)
+    compileOnly rootProject.ext.deps.snakeyaml
+
+    // Testing
+    testImplementation rootProject.ext.deps.junit
+    testImplementation rootProject.ext.deps.mockito
+}

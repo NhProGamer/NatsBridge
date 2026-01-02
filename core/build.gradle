@@ -1,14 +1,14 @@
 description = 'Core NATS connection and API implementation'
 
+// Appliquer les configurations de versions centralisées
+apply from: rootProject.file('gradle/versions.gradle')
+
 dependencies {
     api project(':common')
 
-    // Reflection utilities
-    implementation 'org.reflections:reflections:0.10.2'
-
     // JSON processing
-    implementation 'com.google.code.gson:gson:2.10.1'
+    compileOnly rootProject.ext.deps.gson
 
     // Annotations processing
-    compileOnly 'org.jetbrains:annotations:24.0.1'
+    compileOnly rootProject.ext.deps.jetbrainsAnnotations
 }

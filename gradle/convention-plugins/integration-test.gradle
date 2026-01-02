@@ -1,0 +1,11 @@
+// Configuration pour les tests d'intégration avec RunPaper/RunVelocity/RunWaterfall
+
+// Configuration commune pour les tâches de test d'intégration
+ext {
+    // Versions des serveurs/proxies pour les tests
+    testVersions = [
+        paper: '1.21.8',
+        velocity: '3.4.0-SNAPSHOT',
+        waterfall: '1.21'
+    ]
+}

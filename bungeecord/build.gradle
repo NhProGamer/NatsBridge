@@ -1,13 +1,22 @@
 description = 'NATS library for BungeeCord proxy'
 
+// Appliquer les configurations de versions centralisées
+apply from: rootProject.file('gradle/versions.gradle')
+
+// Appliquer les conventions pour les plugins Minecraft
+apply from: rootProject.file('gradle/convention-plugins/minecraft-plugin.gradle')
+
+// Appliquer les configurations pour les tests d'intégration
+apply from: rootProject.file('gradle/convention-plugins/integration-test.gradle')
+
 dependencies {
     api project(':core')
 
     // BungeeCord API
-    compileOnly 'net.md-5:bungeecord-api:1.21-R0.1'
+    compileOnly rootProject.ext.deps.bungeecordApi
 
     // Annotations processing
-    compileOnly 'org.jetbrains:annotations:24.0.1'
+    compileOnly rootProject.ext.deps.jetbrainsAnnotations
 }
 
 jar {

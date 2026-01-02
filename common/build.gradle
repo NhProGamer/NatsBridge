@@ -1,6 +1,9 @@
 description = 'Common classes and interfaces for NATS library'
 
+// Appliquer les configurations de versions centralisées
+apply from: rootProject.file('gradle/versions.gradle')
+
 dependencies {
     // Annotations processing
-    compileOnly 'org.jetbrains:annotations:24.0.1'
+    compileOnly rootProject.ext.deps.jetbrainsAnnotations
 }

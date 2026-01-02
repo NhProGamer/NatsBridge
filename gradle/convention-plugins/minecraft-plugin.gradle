@@ -1,0 +1,15 @@
+// Configuration pour les plugins Minecraft (sans bloc plugins)
+
+dependencies {
+    // Annotations processing
+    compileOnly rootProject.ext.deps.jetbrainsAnnotations
+}
+
+jar {
+    // Les sous-modules doivent définir leur propre classifier
+    // archiveClassifier = 'platform-specific'
+}
+
+processResources {
+    // Les sous-modules doivent définir leurs propres expansions de ressources
+}

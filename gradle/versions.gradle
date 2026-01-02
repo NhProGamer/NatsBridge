@@ -1,0 +1,76 @@
+ext {
+    // Java version - doit correspondre à la version disponible dans le système
+    javaVersion = 21
+
+    // Plugin versions
+    versions = [
+        shadow: '8.1.1',
+        autoService: '1.1.1',
+        runPaper: '2.2.1',
+        runVelocity: '2.2.1',
+        runWaterfall: '2.2.1'
+    ]
+
+    // Library versions
+    libraries = [
+        // NATS client
+        jnats: '2.17.2',
+
+        // Logging
+        slf4j: '2.0.9',
+
+        // Configuration
+        snakeyaml: '2.2',
+
+        // Testing
+        junit: '5.10.1',
+        mockito: '5.7.0',
+
+        // Annotations
+        jetbrainsAnnotations: '24.0.1',
+
+        // Reflection
+        reflections: '0.10.2',
+
+        // JSON
+        gson: '2.10.1',
+
+        // Minecraft platforms
+        velocity: '3.2.0-SNAPSHOT',
+        spigot: '1.20.4-R0.1-SNAPSHOT',
+        bungeecord: '1.21-R0.1'
+    ]
+
+    // Dependencies
+    deps = [
+        // NATS
+        jnats: "io.nats:jnats:${libraries.jnats}",
+
+        // Logging
+        slf4j: "org.slf4j:slf4j-api:${libraries.slf4j}",
+
+        // Configuration
+        snakeyaml: "org.yaml:snakeyaml:${libraries.snakeyaml}",
+
+        // Testing
+        junit: "org.junit.jupiter:junit-jupiter:${libraries.junit}",
+        mockito: "org.mockito:mockito-core:${libraries.mockito}",
+
+        // Annotations
+        jetbrainsAnnotations: "org.jetbrains:annotations:${libraries.jetbrainsAnnotations}",
+
+        // Reflection
+        reflections: "org.reflections:reflections:${libraries.reflections}",
+
+        // JSON
+        gson: "com.google.code.gson:gson:${libraries.gson}",
+
+        // AutoService
+        autoService: "com.google.auto.service:auto-service:${versions.autoService}",
+
+        // Minecraft platforms
+        velocityApi: "com.velocitypowered:velocity-api:${libraries.velocity}",
+        spigotApi: "org.spigotmc:spigot-api:${libraries.spigot}",
+        bungeecordApi: "net.md-5:bungeecord-api:${libraries.bungeecord}"
+    ]
+}

@@ -1,0 +1,22 @@
+// Configuration de publication Maven (sans bloc plugins)
+publishing {
+    repositories {
+        maven {
+            name = "NhSoulRepo"
+            url = uri("https://repo.nhsoul.fr/releases")
+            credentials(PasswordCredentials) {
+                username = System.getenv("REPO_USERNAME")
+                password = System.getenv("REPO_SECRET")
+            }
+        }
+    }
+    publications {
+        create("gpr", MavenPublication) {
+            from components.java
+
+            groupId = "fr.nhsoul.natsbridge"
+            artifactId = project.name
+            version = rootProject.findProperty("plugin.version")
+        }
+    }
+}
