@@ -28,7 +28,8 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label,
+            @NotNull String[] args) {
         if (!sender.hasPermission(ADMIN_PERMISSION)) {
             sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return true;
@@ -52,10 +53,6 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
                 testPublish(sender, args[1], String.join(" ", Arrays.copyOfRange(args, 2, args.length)));
                 break;
 
-            case "rescan":
-                rescanPlugins(sender);
-                break;
-
             case "reload":
                 reloadConfig(sender);
                 break;
@@ -70,13 +67,14 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
 
     @Override
     @Nullable
-    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, @NotNull String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias,
+            @NotNull String[] args) {
         if (!sender.hasPermission(ADMIN_PERMISSION)) {
             return null;
         }
 
         if (args.length == 1) {
-            return Arrays.asList("status", "test", "rescan", "reload")
+            return Arrays.asList("status", "test", "reload")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -92,8 +90,8 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
     private void sendHelp(@NotNull CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "=== NatsBridge Commands ===");
         sender.sendMessage(ChatColor.YELLOW + "/nats status" + ChatColor.WHITE + " - Show NATS connection status");
-        sender.sendMessage(ChatColor.YELLOW + "/nats test <subject> <message>" + ChatColor.WHITE + " - Send a test message");
-        sender.sendMessage(ChatColor.YELLOW + "/nats rescan" + ChatColor.WHITE + " - Rescan all plugins for NATS subscriptions");
+        sender.sendMessage(
+                ChatColor.YELLOW + "/nats test <subject> <message>" + ChatColor.WHITE + " - Send a test message");
         sender.sendMessage(ChatColor.YELLOW + "/nats reload" + ChatColor.WHITE + " - Reload NATS configuration");
     }
 
@@ -141,19 +139,6 @@ public class SpigotNatsCommand implements CommandExecutor, TabCompleter {
         } catch (Exception e) {
             sender.sendMessage(ChatColor.RED + "Failed to send test message: " + e.getMessage());
             plugin.getLogger().warning("Test message failed: " + e.getMessage());
-        }
-    }
-
-    private void rescanPlugins(@NotNull CommandSender sender) {
-        sender.sendMessage(ChatColor.YELLOW + "Rescanning all plugins for NATS subscriptions...");
-
-        try {
-            SpigotPluginScanner scanner = new SpigotPluginScanner(plugin, natsBridge);
-            scanner.scanAllPlugins();
-            sender.sendMessage(ChatColor.GREEN + "Plugin rescan completed successfully!");
-        } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Failed to rescan plugins: " + e.getMessage());
-            plugin.getLogger().warning("Plugin rescan failed: " + e.getMessage());
         }
     }
 

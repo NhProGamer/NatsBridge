@@ -2,14 +2,15 @@ package fr.nhsoul.natsbridge.core.connection;
 
 import fr.nhsoul.natsbridge.common.config.NatsConfig;
 import fr.nhsoul.natsbridge.common.exception.NatsException;
+import fr.nhsoul.natsbridge.common.logger.NatsLogger;
+import fr.nhsoul.natsbridge.core.DefaultSlf4jLogger;
+import fr.nhsoul.natsbridge.core.NatsBridge;
 import io.nats.client.Connection;
 import io.nats.client.ConnectionListener;
 import io.nats.client.Nats;
 import io.nats.client.Options;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
@@ -21,7 +22,10 @@ import java.time.Duration;
  */
 public class NatsConnectionManager {
 
-    private static final Logger logger = LoggerFactory.getLogger(NatsConnectionManager.class);
+    private NatsLogger getLogger() {
+        NatsBridge bridge = NatsBridge.getInstance();
+        return bridge != null ? bridge.getLogger() : new DefaultSlf4jLogger(NatsConnectionManager.class);
+    }
 
     private final NatsConfig config;
     private Connection connection;
@@ -40,7 +44,7 @@ public class NatsConnectionManager {
         }
 
         try {
-            logger.info("Connecting to NATS servers: {}", config.getServers());
+            getLogger().info("Connecting to NATS servers: {}", config.getServers());
 
             Options.Builder optionsBuilder = new Options.Builder()
                     .servers(config.getServers().toArray(new String[0]))
@@ -49,15 +53,15 @@ public class NatsConnectionManager {
                     .connectionTimeout(Duration.ofMillis(config.getReconnect().getConnectionTimeoutMs()))
                     .connectionListener((conn, type) -> {
                         if (type == ConnectionListener.Events.CONNECTED) {
-                            logger.info("NATS Connected to {}:{}", conn.getServerInfo().getHost(),
+                            getLogger().info("NATS Connected to {}:{}", conn.getServerInfo().getHost(),
                                     conn.getServerInfo().getPort());
                         } else if (type == ConnectionListener.Events.DISCONNECTED) {
-                            logger.warn("NATS Disconnected");
+                            getLogger().warn("NATS Disconnected");
                         } else if (type == ConnectionListener.Events.RECONNECTED) {
-                            logger.info("NATS Reconnected to {}:{}", conn.getServerInfo().getHost(),
+                            getLogger().info("NATS Reconnected to {}:{}", conn.getServerInfo().getHost(),
                                     conn.getServerInfo().getPort());
                         } else if (type == ConnectionListener.Events.CLOSED) {
-                            logger.info("NATS Connection Closed");
+                            getLogger().info("NATS Connection Closed");
                         }
                     });
 
@@ -75,7 +79,7 @@ public class NatsConnectionManager {
     public void disconnect() {
         if (connection != null && connection.getStatus() != Connection.Status.CLOSED) {
             try {
-                logger.info("Closing NATS connection...");
+                getLogger().info("Closing NATS connection...");
                 connection.close();
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();

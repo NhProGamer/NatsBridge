@@ -20,14 +20,14 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
     private final NatsBridge natsBridge;
 
     public BungeeCordNatsCommand(@NotNull BungeeCordNatsPlugin plugin, @NotNull NatsBridge natsBridge) {
-        super("nats", "natslib.admin");
+        super("nats", "natsbridge.admin");
         this.plugin = plugin;
         this.natsBridge = natsBridge;
     }
 
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull String[] args) {
-        if (!sender.hasPermission("natslib.admin")) {
+        if (!sender.hasPermission("natsbridge.admin")) {
             sender.sendMessage(ChatColor.RED + "You don't have permission to use this command.");
             return;
         }
@@ -50,10 +50,6 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
                 testPublish(sender, args[1], String.join(" ", Arrays.copyOfRange(args, 2, args.length)));
                 break;
 
-            case "rescan":
-                rescanPlugins(sender);
-                break;
-
             case "reload":
                 reloadConfig(sender);
                 break;
@@ -66,12 +62,12 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
 
     @Override
     public Iterable<String> onTabComplete(@NotNull CommandSender sender, @NotNull String[] args) {
-        if (!sender.hasPermission("natslib.admin")) {
+        if (!sender.hasPermission("natsbridge.admin")) {
             return List.of();
         }
 
         if (args.length == 1) {
-            return Arrays.asList("status", "test", "rescan", "reload")
+            return Arrays.asList("status", "test", "reload")
                     .stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
@@ -87,8 +83,8 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
     private void sendHelp(@NotNull CommandSender sender) {
         sender.sendMessage(ChatColor.GOLD + "=== NatsBridge Commands ===");
         sender.sendMessage(ChatColor.YELLOW + "/nats status" + ChatColor.WHITE + " - Show NATS connection status");
-        sender.sendMessage(ChatColor.YELLOW + "/nats test <subject> <message>" + ChatColor.WHITE + " - Send a test message");
-        sender.sendMessage(ChatColor.YELLOW + "/nats rescan" + ChatColor.WHITE + " - Rescan all plugins for NATS subscriptions");
+        sender.sendMessage(
+                ChatColor.YELLOW + "/nats test <subject> <message>" + ChatColor.WHITE + " - Send a test message");
         sender.sendMessage(ChatColor.YELLOW + "/nats reload" + ChatColor.WHITE + " - Reload NATS configuration");
     }
 
@@ -136,19 +132,6 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
         } catch (Exception e) {
             sender.sendMessage(ChatColor.RED + "Failed to send test message: " + e.getMessage());
             plugin.getLogger().warning("Test message failed: " + e.getMessage());
-        }
-    }
-
-    private void rescanPlugins(@NotNull CommandSender sender) {
-        sender.sendMessage(ChatColor.YELLOW + "Rescanning all plugins for NATS subscriptions...");
-
-        try {
-            BungeeCordPluginScanner scanner = new BungeeCordPluginScanner(plugin, natsBridge);
-            scanner.scanAllPlugins();
-            sender.sendMessage(ChatColor.GREEN + "Plugin rescan completed successfully!");
-        } catch (Exception e) {
-            sender.sendMessage(ChatColor.RED + "Failed to rescan plugins: " + e.getMessage());
-            plugin.getLogger().warning("Plugin rescan failed: " + e.getMessage());
         }
     }
 

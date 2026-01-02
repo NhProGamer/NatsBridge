@@ -53,10 +53,6 @@ public class VelocityNatsCommand implements SimpleCommand {
                 testPublish(source, args[1], String.join(" ", Arrays.copyOfRange(args, 2, args.length)));
                 break;
 
-            case "rescan":
-                rescanPlugins(source);
-                break;
-
             case "reload":
                 reloadConfig(source);
                 break;
@@ -77,7 +73,7 @@ public class VelocityNatsCommand implements SimpleCommand {
 
         if (args.length <= 1) {
             String partial = args.length > 0 ? args[0].toLowerCase() : "";
-            return Arrays.asList("status", "test", "rescan", "reload")
+            return Arrays.asList("status", "test", "reload")
                     .stream()
                     .filter(s -> s.startsWith(partial))
                     .collect(Collectors.toList());
@@ -101,8 +97,6 @@ public class VelocityNatsCommand implements SimpleCommand {
                 .append(Component.text(" - Show NATS connection status", NamedTextColor.WHITE)));
         source.sendMessage(Component.text("/nats test <subject> <message>", NamedTextColor.YELLOW)
                 .append(Component.text(" - Send a test message", NamedTextColor.WHITE)));
-        source.sendMessage(Component.text("/nats rescan", NamedTextColor.YELLOW)
-                .append(Component.text(" - Rescan all plugins for NATS subscriptions", NamedTextColor.WHITE)));
         source.sendMessage(Component.text("/nats reload", NamedTextColor.YELLOW)
                 .append(Component.text(" - Reload NATS configuration", NamedTextColor.WHITE)));
     }
@@ -161,21 +155,9 @@ public class VelocityNatsCommand implements SimpleCommand {
         }
     }
 
-    private void rescanPlugins(@NotNull CommandSource source) {
-        source.sendMessage(Component.text("Rescanning all plugins for NATS subscriptions...", NamedTextColor.YELLOW));
-
-        try {
-            VelocityPluginScanner scanner = new VelocityPluginScanner(plugin.getServer(), natsBridge);
-            scanner.scanAllPlugins();
-            source.sendMessage(Component.text("Plugin rescan completed successfully!", NamedTextColor.GREEN));
-        } catch (Exception e) {
-            source.sendMessage(Component.text("Failed to rescan plugins: " + e.getMessage(), NamedTextColor.RED));
-            plugin.getLogger().warn("Plugin rescan failed: " + e.getMessage());
-        }
-    }
-
     private void reloadConfig(@NotNull CommandSource source) {
         source.sendMessage(Component.text("Configuration reload is not supported yet.", NamedTextColor.RED));
-        source.sendMessage(Component.text("Please restart the proxy to apply configuration changes.", NamedTextColor.YELLOW));
+        source.sendMessage(
+                Component.text("Please restart the proxy to apply configuration changes.", NamedTextColor.YELLOW));
     }
 }

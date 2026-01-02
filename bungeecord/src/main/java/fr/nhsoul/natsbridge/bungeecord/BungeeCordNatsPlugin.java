@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.logging.Level;
 
 /**
  * Plugin principal pour BungeeCord.
@@ -20,7 +21,6 @@ public class BungeeCordNatsPlugin extends Plugin {
     private static BungeeCordNatsPlugin instance;
 
     private NatsBridge natsBridge;
-    private BungeeCordPluginScanner pluginScanner;
 
     @Override
     public void onEnable() {
@@ -32,27 +32,21 @@ public class BungeeCordNatsPlugin extends Plugin {
 
             // Initialiser la librairie NATS
             File configFile = new File(getDataFolder(), "nats-config.yml");
-            natsBridge = NatsBridge.initialize(configFile);
 
-            // Initialiser le scanner de plugins
-            pluginScanner = new BungeeCordPluginScanner(this, natsBridge);
-
-            // Démarrer NATS
-            natsBridge.start().thenRun(() -> {
-                getLogger().info("NATS library started successfully");
-
-                // Scanner les plugins déjà chargés
-                pluginScanner.scanAllPlugins();
-
-                // Enregistrer les événements pour les nouveaux plugins
-                getProxy().getPluginManager().registerListener(this, pluginScanner);
-                getProxy().getPluginManager().callEvent(new BungeeNatsBridgeConnectedEvent());
-
-
-            }).exceptionally(throwable -> {
-                getLogger().severe("Failed to start NATS library: " + throwable.getMessage());
-                return null;
-            });
+            try {
+                NatsBridge.initialize(configFile, new BungeeCordNatsLogger(getLogger()));
+                natsBridge = NatsBridge.getInstance();
+                natsBridge.start().thenRun(() -> {
+                    getLogger().info("NATS library started successfully");
+                    // Enregistrer les événements pour les nouveaux plugins
+                    getProxy().getPluginManager().callEvent(new BungeeNatsBridgeConnectedEvent());
+                }).exceptionally(throwable -> {
+                    getLogger().log(Level.SEVERE, "Failed to start NATS library", throwable);
+                    return null;
+                });
+            } catch (Exception e) {
+                getLogger().log(Level.SEVERE, "Could not initialize NatsBridge", e);
+            }
 
             // Enregistrer les commandes
             BungeeCordNatsCommand command = new BungeeCordNatsCommand(this, natsBridge);
@@ -61,17 +55,13 @@ public class BungeeCordNatsPlugin extends Plugin {
             getLogger().info("NatsBridge plugin enabled successfully");
 
         } catch (Exception e) {
-            getLogger().severe("Failed to enable NatsBridge plugin: " + e.getMessage());
+            getLogger().log(Level.SEVERE, "Failed to enable NatsBridge plugin", e);
             e.printStackTrace();
         }
     }
 
     @Override
     public void onDisable() {
-        if (pluginScanner != null) {
-            pluginScanner.shutdown();
-        }
-
         if (natsBridge != null) {
             getLogger().info("Shutting down NATS library...");
             natsBridge.shutdown();
@@ -117,17 +107,6 @@ public class BungeeCordNatsPlugin extends Plugin {
             throw new IllegalStateException("NatsBridge not initialized");
         }
         return natsBridge;
-    }
-
-    /**
-     * Enregistre un plugin pour scanner ses annotations @NatsSubscribe.
-     *
-     * @param plugin le plugin à enregistrer
-     */
-    public void registerPlugin(@NotNull Object plugin) {
-        if (natsBridge != null) {
-            natsBridge.registerPlugin(plugin);
-        }
     }
 
     private void setupConfigFile() throws IOException {

@@ -3,15 +3,13 @@ package fr.nhsoul.natsbridge.core;
 import fr.nhsoul.natsbridge.common.api.NatsAPI;
 import fr.nhsoul.natsbridge.common.config.NatsConfig;
 import fr.nhsoul.natsbridge.common.exception.NatsException;
+import fr.nhsoul.natsbridge.common.logger.NatsLogger;
 import fr.nhsoul.natsbridge.core.api.NatsAPIImpl;
 import fr.nhsoul.natsbridge.core.config.ConfigLoader;
 import fr.nhsoul.natsbridge.core.connection.NatsConnectionManager;
-import fr.nhsoul.natsbridge.core.subscription.SubscriptionManager;
-import fr.nhsoul.natsbridge.core.subscription.impl.DefaultSubscriptionManager;
+import fr.nhsoul.natsbridge.core.subscription.DefaultSubscriptionManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.concurrent.CompletableFuture;
@@ -23,12 +21,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 public class NatsBridge {
 
-    private static final Logger logger = LoggerFactory.getLogger(NatsBridge.class);
+    private static NatsLogger logger = new DefaultSlf4jLogger(NatsBridge.class);
     private static volatile NatsBridge instance;
 
     private final NatsConfig config;
     private final NatsConnectionManager connectionManager;
-    private final SubscriptionManager subscriptionManager;
+    private final DefaultSubscriptionManager subscriptionManager;
     private final NatsAPI api;
     private final AtomicBoolean initialized = new AtomicBoolean(false);
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
@@ -53,31 +51,51 @@ public class NatsBridge {
      * @throws NatsException.ConfigurationException si l'initialisation échoue
      */
     @NotNull
-    public static synchronized NatsBridge initialize(@NotNull File configFile) {
+    public static synchronized NatsBridge initialize(@NotNull File configFile, @Nullable NatsLogger natsLogger) {
         if (instance != null) {
-            logger.warn("NatsBridge already initialized, returning existing instance");
+            instance.getLogger().warn("NatsBridge already initialized, returning existing instance");
             return instance;
         }
 
+        if (natsLogger != null) {
+            logger = natsLogger;
+        }
+
         NatsConfig config = ConfigLoader.loadFromFile(configFile);
-        return initialize(config);
+        return initialize(config, logger);
     }
 
     /**
      * Initialise la librairie NATS avec une configuration.
      *
-     * @param config la configuration NATS
+     * @param config     la configuration NATS
+     * @param natsLogger le logger à utiliser (optionnel)
      * @return l'instance initialisée
      */
     @NotNull
-    public static synchronized NatsBridge initialize(@NotNull NatsConfig config) {
+    public static synchronized NatsBridge initialize(@NotNull NatsConfig config, @Nullable NatsLogger natsLogger) {
         if (instance != null) {
-            logger.warn("NatsBridge already initialized, returning existing instance");
+            instance.getLogger().warn("NatsBridge already initialized, returning existing instance");
             return instance;
+        }
+
+        if (natsLogger != null) {
+            logger = natsLogger;
         }
 
         instance = new NatsBridge(config);
         return instance;
+    }
+
+    /**
+     * Initialise la librairie NATS avec un fichier de configuration.
+     *
+     * @param configFile le fichier de configuration
+     * @return l'instance initialisée
+     */
+    @NotNull
+    public static synchronized NatsBridge initialize(@NotNull File configFile) {
+        return initialize(configFile, null);
     }
 
     /**
@@ -87,7 +105,7 @@ public class NatsBridge {
      */
     @NotNull
     public static synchronized NatsBridge initializeDefault() {
-        return initialize(ConfigLoader.createDefaultConfig());
+        return initialize(ConfigLoader.createDefaultConfig(), null);
     }
 
     /**
@@ -138,21 +156,11 @@ public class NatsBridge {
                 subscriptionManager.subscribeAll();
                 logger.info("NatsBridge started successfully");
             } catch (Exception e) {
-                // Wrap checked exceptions if necessary, though connect throws NatsException
-                // (RuntimeException)
-                if (e instanceof RuntimeException) {
-                    throw (RuntimeException) e;
-                }
-                throw new NatsException.ConnectionException("Failed to start NatsBridge", e);
+                logger.error("Failed to start NatsBridge", e);
+                initialized.set(false);
+                throw (e instanceof RuntimeException) ? (RuntimeException) e
+                        : new NatsException.ConnectionException("Failed to start NatsBridge", e);
             }
-        }).exceptionally(throwable -> {
-            logger.error("Failed to start NatsBridge", throwable);
-            initialized.set(false);
-            // Re-throw to fail the future
-            if (throwable instanceof RuntimeException) {
-                throw (RuntimeException) throwable;
-            }
-            throw new RuntimeException(throwable);
         });
     }
 
@@ -179,19 +187,6 @@ public class NatsBridge {
     }
 
     /**
-     * Enregistre un plugin pour scanner ses annotations @NatsSubscribe.
-     *
-     * @param plugin l'objet plugin à scanner
-     */
-    public void registerPlugin(@NotNull Object plugin) {
-        if (shutdown.get()) {
-            throw new IllegalStateException("Cannot register plugins after shutdown");
-        }
-
-        subscriptionManager.scanAndRegister(plugin);
-    }
-
-    /**
      * Obtient l'API NATS pour publier des messages.
      *
      * @return l'API NATS
@@ -202,6 +197,18 @@ public class NatsBridge {
     }
 
     /**
+     * Obtient le SubscriptionManager pour la gestion avancée des subscriptions.
+     * Cette méthode est principalement utilisée par les scanners de plugins pour
+     * charger les subscriptions générées par l'annotation processor.
+     *
+     * @return le SubscriptionManager
+     */
+    @NotNull
+    public DefaultSubscriptionManager getSubscriptionManager() {
+        return subscriptionManager;
+    }
+
+    /**
      * Obtient la configuration actuelle.
      *
      * @return la configuration NATS
@@ -209,6 +216,16 @@ public class NatsBridge {
     @NotNull
     public NatsConfig getConfig() {
         return config;
+    }
+
+    /**
+     * Obtient le logger utilisé par la librairie.
+     *
+     * @return le logger
+     */
+    @NotNull
+    public NatsLogger getLogger() {
+        return logger;
     }
 
     /**

@@ -12,6 +12,7 @@ import fr.nhsoul.natsbridge.core.NatsBridge;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -22,13 +23,8 @@ import java.nio.file.StandardCopyOption;
  * Plugin principal pour Velocity.
  * Initialise la librairie NATS et la rend disponible aux autres plugins.
  */
-@Plugin(
-        id = "natsbridge",
-        name = "NatsBridge",
-        version = "1.0.0-SNAPSHOT",
-        description = "NATS messaging library for Minecraft servers",
-        authors = {"NhPro"}
-)
+@Plugin(id = "natsbridge", name = "NatsBridge", version = "1.0.0-SNAPSHOT", description = "NATS messaging library for Minecraft servers", authors = {
+        "NhPro" })
 public class VelocityNatsPlugin {
 
     private static VelocityNatsPlugin instance;
@@ -38,7 +34,6 @@ public class VelocityNatsPlugin {
     private final Path dataDirectory;
 
     private NatsBridge natsBridge;
-    private VelocityPluginScanner pluginScanner;
 
     @Inject
     public VelocityNatsPlugin(ProxyServer server, Logger logger, @DataDirectory Path dataDirectory) {
@@ -58,26 +53,22 @@ public class VelocityNatsPlugin {
 
             // Initialiser la librairie NATS
             Path configPath = dataDirectory.resolve("nats-config.yml");
-            natsBridge = natsBridge.initialize(configPath.toFile());
+            File configFile = configPath.toFile();
 
-            // Initialiser le scanner de plugins
-            pluginScanner = new VelocityPluginScanner(server, natsBridge);
-
-            // Démarrer NATS
-            natsBridge.start().thenRun(() -> {
-                logger.info("NATS library started successfully");
-
-                // Scanner les plugins déjà chargés
-                pluginScanner.scanAllPlugins();
-
-                // Enregistrer les événements pour les nouveaux plugins
-                server.getEventManager().register(this, pluginScanner);
-                server.getEventManager().fire(new VelocityNatsBridgeConnectedEvent());
-
-            }).exceptionally(throwable -> {
-                logger.error("Failed to start NATS library", throwable);
-                return null;
-            });
+            // Initialisation de NatsBridge
+            try {
+                NatsBridge.initialize(configFile, new VelocityNatsLogger(logger));
+                natsBridge = NatsBridge.getInstance();
+                natsBridge.start().thenRun(() -> {
+                    logger.info("NATS library started successfully");
+                    server.getEventManager().fire(new VelocityNatsBridgeConnectedEvent());
+                }).exceptionally(throwable -> {
+                    logger.error("Failed to start NATS library", throwable);
+                    return null;
+                });
+            } catch (Exception e) {
+                logger.error("Could not initialize NatsBridge", e);
+            }
 
             // Enregistrer les commandes
             VelocityNatsCommand command = new VelocityNatsCommand(this, natsBridge);
@@ -92,9 +83,6 @@ public class VelocityNatsPlugin {
 
     @Subscribe
     public void onProxyShutdown(@NotNull ProxyShutdownEvent event) {
-        if (pluginScanner != null) {
-            pluginScanner.shutdown();
-        }
 
         if (natsBridge != null) {
             logger.info("Shutting down NATS library...");
@@ -127,7 +115,7 @@ public class VelocityNatsPlugin {
      */
     @NotNull
     public static NatsAPI getNatsAPI() {
-        return getInstance().getnatsBridge().getAPI();
+        return getInstance().getNatsBridge().getAPI();
     }
 
     /**
@@ -136,7 +124,7 @@ public class VelocityNatsPlugin {
      * @return la librairie NATS
      */
     @NotNull
-    public NatsBridge getnatsBridge() {
+    public NatsBridge getNatsBridge() {
         if (natsBridge == null) {
             throw new IllegalStateException("NatsBridge not initialized");
         }
@@ -171,17 +159,6 @@ public class VelocityNatsPlugin {
     @NotNull
     public Path getDataDirectory() {
         return dataDirectory;
-    }
-
-    /**
-     * Enregistre un plugin pour scanner ses annotations @NatsSubscribe.
-     *
-     * @param plugin le plugin à enregistrer
-     */
-    public void registerPlugin(@NotNull Object plugin) {
-        if (natsBridge != null) {
-            natsBridge.registerPlugin(plugin);
-        }
     }
 
     private void setupConfigFile() throws IOException {

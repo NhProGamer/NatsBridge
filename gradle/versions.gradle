@@ -29,11 +29,7 @@ ext {
         // Annotations
         jetbrainsAnnotations: '24.0.1',
 
-        // Reflection
-        reflections: '0.10.2',
 
-        // JSON
-        gson: '2.10.1',
 
         // Minecraft platforms
         velocity: '3.2.0-SNAPSHOT',
@@ -59,14 +55,7 @@ ext {
         // Annotations
         jetbrainsAnnotations: "org.jetbrains:annotations:${libraries.jetbrainsAnnotations}",
 
-        // Reflection
-        reflections: "org.reflections:reflections:${libraries.reflections}",
 
-        // JSON
-        gson: "com.google.code.gson:gson:${libraries.gson}",
-
-        // AutoService
-        autoService: "com.google.auto.service:auto-service:${versions.autoService}",
 
         // Minecraft platforms
         velocityApi: "com.velocitypowered:velocity-api:${libraries.velocity}",

@@ -6,9 +6,6 @@ apply from: rootProject.file('gradle/versions.gradle')
 dependencies {
     api project(':common')
 
-    // JSON processing
-    compileOnly rootProject.ext.deps.gson
-
     // Annotations processing
     compileOnly rootProject.ext.deps.jetbrainsAnnotations
 }

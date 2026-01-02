@@ -1,18 +1,17 @@
 package fr.nhsoul.natsbridge.core.api;
 
-import fr.nhsoul.natsbridge.common.annotation.NatsSubscribe;
 import fr.nhsoul.natsbridge.common.api.NatsAPI;
+import fr.nhsoul.natsbridge.common.config.NatsConfig;
 import fr.nhsoul.natsbridge.common.exception.NatsException;
+import fr.nhsoul.natsbridge.common.logger.NatsLogger;
+import fr.nhsoul.natsbridge.core.DefaultSlf4jLogger;
+import fr.nhsoul.natsbridge.core.NatsBridge;
 import fr.nhsoul.natsbridge.core.connection.NatsConnectionManager;
-import fr.nhsoul.natsbridge.core.subscription.SubscriptionManager;
+import fr.nhsoul.natsbridge.core.subscription.DefaultSubscriptionManager;
 import io.nats.client.Connection;
-import io.nats.client.Dispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -23,11 +22,16 @@ import java.util.function.Consumer;
  */
 public class NatsAPIImpl implements NatsAPI {
 
-    private static final Logger logger = LoggerFactory.getLogger(NatsAPIImpl.class);
-    private final NatsConnectionManager connectionManager;
-    private final SubscriptionManager subscriptionManager;
+    private NatsLogger getLogger() {
+        NatsBridge bridge = NatsBridge.getInstance();
+        return bridge != null ? bridge.getLogger() : new DefaultSlf4jLogger(NatsAPIImpl.class);
+    }
 
-    public NatsAPIImpl(@NotNull NatsConnectionManager connectionManager, SubscriptionManager subscriptionManager) {
+    private final NatsConnectionManager connectionManager;
+    private final DefaultSubscriptionManager subscriptionManager;
+
+    public NatsAPIImpl(@NotNull NatsConnectionManager connectionManager,
+            DefaultSubscriptionManager subscriptionManager) {
         this.connectionManager = connectionManager;
         this.subscriptionManager = subscriptionManager;
     }
@@ -39,17 +43,13 @@ public class NatsAPIImpl implements NatsAPI {
         Connection connection = getConnectionOrThrow();
 
         try {
-            if (data == null) {
-                connection.publish(subject, null);
-            } else {
-                connection.publish(subject, data);
-            }
+            connection.publish(subject, data);
 
-            logger.debug("Published raw message to subject '{}' ({} bytes)", subject,
+            getLogger().debug("Published raw message to subject '{}' ({} bytes)", subject,
                     data != null ? data.length : 0);
 
         } catch (Exception e) {
-            logger.error("Failed to publish raw message to subject '{}'", subject, e);
+            getLogger().error("Failed to publish raw message to subject '{}'", e, subject);
             throw new NatsException.PublishException("Failed to publish raw message to subject: " + subject, e);
         }
     }
@@ -61,32 +61,18 @@ public class NatsAPIImpl implements NatsAPI {
         byte[] bytes = data != null ? data.getBytes(StandardCharsets.UTF_8) : null;
         publishRaw(subject, bytes);
 
-        logger.debug("Published string message to subject '{}': {}", subject,
+        getLogger().debug("Published string message to subject '{}': {}", subject,
                 data != null ? data.substring(0, Math.min(data.length(), 100)) + "..." : "null");
     }
 
     @Override
     public CompletableFuture<Void> publishRawAsync(@NotNull String subject, @Nullable byte[] data) {
-        try {
-            publishRaw(subject, data);
-            return CompletableFuture.completedFuture(null);
-        } catch (Exception e) {
-            CompletableFuture<Void> future = new CompletableFuture<>();
-            future.completeExceptionally(e);
-            return future;
-        }
+        return CompletableFuture.runAsync(() -> publishRaw(subject, data));
     }
 
     @Override
     public CompletableFuture<Void> publishStringAsync(@NotNull String subject, @Nullable String data) {
-        try {
-            publishString(subject, data);
-            return CompletableFuture.completedFuture(null);
-        } catch (Exception e) {
-            CompletableFuture<Void> future = new CompletableFuture<>();
-            future.completeExceptionally(e);
-            return future;
-        }
+        return CompletableFuture.runAsync(() -> publishString(subject, data));
     }
 
     @Override

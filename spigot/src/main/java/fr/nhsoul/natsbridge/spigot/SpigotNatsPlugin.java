@@ -5,14 +5,13 @@ import fr.nhsoul.natsbridge.core.NatsBridge;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.logging.Level;
 
 /**
  * Plugin principal pour Spigot/Paper.
@@ -20,11 +19,9 @@ import java.nio.file.StandardCopyOption;
  */
 public class SpigotNatsPlugin extends JavaPlugin {
 
-    private static final Logger logger = LoggerFactory.getLogger(SpigotNatsPlugin.class);
     private static SpigotNatsPlugin instance;
 
     private NatsBridge natsBridge;
-    private SpigotPluginScanner pluginScanner;
 
     @Override
     public void onEnable() {
@@ -38,19 +35,11 @@ public class SpigotNatsPlugin extends JavaPlugin {
             File configFile = new File(getDataFolder(), "nats-config.yml");
             natsBridge = natsBridge.initialize(configFile);
 
-            // Initialiser le scanner de plugins
-            pluginScanner = new SpigotPluginScanner(this, natsBridge);
-
             // Démarrer NATS
             natsBridge.start().thenRun(() -> {
                 Bukkit.getScheduler().runTask(this, () -> {
                     getLogger().info("NATS library started successfully");
 
-                    // Scanner les plugins déjà chargés
-                    pluginScanner.scanAllPlugins();
-
-                    // Enregistrer les événements pour les nouveaux plugins
-                    getServer().getPluginManager().registerEvents(pluginScanner, this);
                     getServer().getPluginManager().callEvent(new SpigotNatsBridgeConnectedEvent());
                 });
             }).exceptionally(throwable -> {
@@ -66,6 +55,26 @@ public class SpigotNatsPlugin extends JavaPlugin {
 
             getLogger().info("NatsBridge plugin enabled successfully");
 
+            // Initialisation de NatsBridge
+            try {
+                NatsBridge.initialize(configFile, new SpigotNatsLogger(getLogger()));
+                natsBridge = NatsBridge.getInstance();
+                natsBridge.start().thenRun(() -> { // Re-added async start for consistency with original behavior
+                    Bukkit.getScheduler().runTask(this, () -> {
+                        getLogger().info("NATS library started successfully");
+                        getServer().getPluginManager().callEvent(new SpigotNatsBridgeConnectedEvent());
+                    });
+                }).exceptionally(throwable -> {
+                    getLogger().severe("Failed to start NATS library: " + throwable.getMessage());
+                    getServer().getPluginManager().disablePlugin(this);
+                    return null;
+                });
+            } catch (Exception e) {
+                getLogger().log(Level.SEVERE, "Could not initialize NatsBridge", e);
+                getServer().getPluginManager().disablePlugin(this);
+                return;
+            }
+
         } catch (Exception e) {
             getLogger().severe("Failed to enable NatsBridge plugin: " + e.getMessage());
             e.printStackTrace();
@@ -75,9 +84,6 @@ public class SpigotNatsPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
-        if (pluginScanner != null) {
-            pluginScanner.shutdown();
-        }
 
         if (natsBridge != null) {
             getLogger().info("Shutting down NATS library...");
@@ -110,7 +116,7 @@ public class SpigotNatsPlugin extends JavaPlugin {
      */
     @NotNull
     public static NatsAPI getNatsAPI() {
-        return getInstance().getnatsBridge().getAPI();
+        return getInstance().getNatsBridge().getAPI();
     }
 
     /**
@@ -119,22 +125,11 @@ public class SpigotNatsPlugin extends JavaPlugin {
      * @return la librairie NATS
      */
     @NotNull
-    public NatsBridge getnatsBridge() {
+    public NatsBridge getNatsBridge() {
         if (natsBridge == null) {
             throw new IllegalStateException("NatsBridge not initialized");
         }
         return natsBridge;
-    }
-
-    /**
-     * Enregistre un plugin pour scanner ses annotations @NatsSubscribe.
-     *
-     * @param plugin le plugin à enregistrer
-     */
-    public void registerPlugin(@NotNull Object plugin) {
-        if (natsBridge != null) {
-            natsBridge.registerPlugin(plugin);
-        }
     }
 
     private void setupConfigFile() throws IOException {
