@@ -67,12 +67,26 @@ public class NatsAPIImpl implements NatsAPI {
 
     @Override
     public CompletableFuture<Void> publishRawAsync(@NotNull String subject, @Nullable byte[] data) {
-        return CompletableFuture.runAsync(() -> publishRaw(subject, data));
+        try {
+            publishRaw(subject, data);
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
+        }
     }
 
     @Override
     public CompletableFuture<Void> publishStringAsync(@NotNull String subject, @Nullable String data) {
-        return CompletableFuture.runAsync(() -> publishString(subject, data));
+        try {
+            publishString(subject, data);
+            return CompletableFuture.completedFuture(null);
+        } catch (Exception e) {
+            CompletableFuture<Void> future = new CompletableFuture<>();
+            future.completeExceptionally(e);
+            return future;
+        }
     }
 
     @Override

@@ -35,7 +35,7 @@ public class NatsBridge {
 
     private NatsBridge(@NotNull NatsConfig config) {
         this.config = config;
-        this.connectionManager = NatsConnectionManager.getInstance(config);
+        this.connectionManager = new NatsConnectionManager(config);
         this.subscriptionManager = new DefaultSubscriptionManager(connectionManager);
         this.api = new NatsAPIImpl(connectionManager, subscriptionManager);
 
@@ -132,16 +132,28 @@ public class NatsBridge {
 
         logger.info("Starting NatsBridge...");
 
-        return connectionManager.connect()
-                .thenRun(() -> {
-                    subscriptionManager.subscribeAll();
-                    logger.info("NatsBridge started successfully");
-                })
-                .exceptionally(throwable -> {
-                    logger.error("Failed to start NatsBridge", throwable);
-                    initialized.set(false);
-                    throw new NatsException.ConnectionException("Failed to start NatsBridge", throwable);
-                });
+        return CompletableFuture.runAsync(() -> {
+            try {
+                connectionManager.connect();
+                subscriptionManager.subscribeAll();
+                logger.info("NatsBridge started successfully");
+            } catch (Exception e) {
+                // Wrap checked exceptions if necessary, though connect throws NatsException
+                // (RuntimeException)
+                if (e instanceof RuntimeException) {
+                    throw (RuntimeException) e;
+                }
+                throw new NatsException.ConnectionException("Failed to start NatsBridge", e);
+            }
+        }).exceptionally(throwable -> {
+            logger.error("Failed to start NatsBridge", throwable);
+            initialized.set(false);
+            // Re-throw to fail the future
+            if (throwable instanceof RuntimeException) {
+                throw (RuntimeException) throwable;
+            }
+            throw new RuntimeException(throwable);
+        });
     }
 
     /**
@@ -235,6 +247,5 @@ public class NatsBridge {
             instance.shutdown();
             instance = null;
         }
-        NatsConnectionManager.resetInstance();
     }
 }
