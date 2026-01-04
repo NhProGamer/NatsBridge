@@ -16,9 +16,10 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+
 /**
- * Chargeur de configuration NATS depuis un fichier YAML.
- * Gère les valeurs par défaut et la validation de la configuration.
+ * NATS configuration loader from a YAML file.
+ * Handles default values and configuration validation.
  */
 public class ConfigLoader {
 
@@ -27,18 +28,18 @@ public class ConfigLoader {
         return bridge != null ? bridge.getLogger() : new DefaultSlf4jLogger(ConfigLoader.class);
     }
 
-    // Valeurs par défaut
+    // Default values
     private static final List<String> DEFAULT_SERVERS = Arrays.asList("nats://127.0.0.1:4222");
-    private static final int DEFAULT_MAX_RECONNECTS = -1; // Infini
+    private static final int DEFAULT_MAX_RECONNECTS = -1; // Infinite
     private static final long DEFAULT_RECONNECT_WAIT_MS = 2000;
     private static final long DEFAULT_CONNECTION_TIMEOUT_MS = 5000;
 
     /**
-     * Charge la configuration depuis un fichier.
+     * Loads configuration from a file.
      *
-     * @param configFile le fichier de configuration
-     * @return la configuration NATS
-     * @throws NatsException.ConfigurationException si le chargement échoue
+     * @param configFile the configuration file
+     * @return the NATS configuration
+     * @throws NatsException.ConfigurationException if loading fails
      */
     @NotNull
     public static NatsConfig loadFromFile(@NotNull File configFile) {
@@ -58,11 +59,11 @@ public class ConfigLoader {
     }
 
     /**
-     * Charge la configuration depuis un InputStream.
+     * Loads configuration from an InputStream.
      *
-     * @param inputStream le flux de données
-     * @return la configuration NATS
-     * @throws NatsException.ConfigurationException si le chargement échoue
+     * @param inputStream the input stream
+     * @return the NATS configuration
+     * @throws NatsException.ConfigurationException if loading fails
      */
     @NotNull
     public static NatsConfig loadFromStream(@NotNull InputStream inputStream) {
@@ -84,9 +85,9 @@ public class ConfigLoader {
     }
 
     /**
-     * Crée une configuration par défaut.
+     * Creates a default configuration.
      *
-     * @return la configuration par défaut
+     * @return the default configuration
      */
     @NotNull
     public static NatsConfig createDefaultConfig() {
@@ -99,8 +100,8 @@ public class ConfigLoader {
 
         return new NatsConfig(
                 DEFAULT_SERVERS,
-                null, // Pas d'auth par défaut
-                null, // Pas de TLS par défaut
+                null, // No auth by default
+                null, // No TLS by default
                 reconnect);
     }
 
@@ -112,16 +113,16 @@ public class ConfigLoader {
             return createDefaultConfig();
         }
 
-        // Serveurs
+        // Servers
         List<String> servers = parseServers(natsConfig);
 
-        // Authentification
+        // Authentication
         NatsConfig.AuthConfig auth = parseAuth(natsConfig);
 
         // TLS
         NatsConfig.TlsConfig tls = parseTls(natsConfig);
 
-        // Reconnexion
+        // Reconnection
         NatsConfig.ReconnectConfig reconnect = parseReconnect(natsConfig);
 
         return new NatsConfig(servers, auth, tls, reconnect);
@@ -195,7 +196,7 @@ public class ConfigLoader {
     private static NatsConfig.ReconnectConfig parseReconnect(@NotNull Map<String, Object> config) {
         Map<String, Object> reconnectConfig = (Map<String, Object>) config.get("reconnect");
         if (reconnectConfig == null) {
-            reconnectConfig = Map.of(); // Map vide pour utiliser les défauts
+            reconnectConfig = Map.of(); // Empty map to use defaults
         }
 
         int maxReconnects = parseInt(reconnectConfig, "max_reconnects", DEFAULT_MAX_RECONNECTS);

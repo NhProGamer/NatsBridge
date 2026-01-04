@@ -6,105 +6,105 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+
 /**
- * Interface principale pour interagir avec NATS.
- * Fournit des méthodes thread-safe pour publier des messages.
+ * Main interface for interacting with NATS.
+ * Provides thread-safe methods for publishing messages.
  */
 public interface NatsAPI {
 
     /**
-     * Envoie un message brut (byte array) sur un sujet donné.
+     * Sends a raw message (byte array) on a given subject.
      *
-     * @param subject le sujet NATS sur lequel publier
-     * @param data    les données à envoyer (peut être null pour un message vide)
-     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     * @param subject the NATS subject to publish on
+     * @param data    the data to send (can be null for an empty message)
+     * @throws IllegalStateException if the NATS connection is not available
      */
     void publishRaw(@NotNull String subject, @Nullable byte[] data);
 
     /**
-     * Envoie une chaîne UTF-8 sous forme de message sur un sujet donné.
+     * Sends a UTF-8 string as a message on a given subject.
      *
-     * @param subject le sujet NATS sur lequel publier
-     * @param data    la chaîne à envoyer (peut être null pour un message vide)
-     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     * @param subject the NATS subject to publish on
+     * @param data    the string to send (can be null for an empty message)
+     * @throws IllegalStateException if the NATS connection is not available
      */
     void publishString(@NotNull String subject, @Nullable String data);
 
     /**
-     * Envoie un message brut de manière asynchrone.
+     * Sends a raw message asynchronously.
      *
-     * @param subject le sujet NATS sur lequel publier
-     * @param data    les données à envoyer (peut être null pour un message vide)
-     * @return un CompletableFuture qui se complète quand le message est envoyé
-     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     * @param subject the NATS subject to publish on
+     * @param data    the data to send (can be null for an empty message)
+     * @return a CompletableFuture that completes when the message is sent
+     * @throws IllegalStateException if the NATS connection is not available
      */
     CompletableFuture<Void> publishRawAsync(@NotNull String subject, @Nullable byte[] data);
 
     /**
-     * Envoie une chaîne UTF-8 de manière asynchrone.
+     * Sends a UTF-8 string asynchronously.
      *
-     * @param subject le sujet NATS sur lequel publier
-     * @param data    la chaîne à envoyer (peut être null pour un message vide)
-     * @return un CompletableFuture qui se complète quand le message est envoyé
-     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     * @param subject the NATS subject to publish on
+     * @param data    the string to send (can be null for an empty message)
+     * @return a CompletableFuture that completes when the message is sent
+     * @throws IllegalStateException if the NATS connection is not available
      */
     CompletableFuture<Void> publishStringAsync(@NotNull String subject, @Nullable String data);
 
     /**
-     * Souscrit un Consumer à un sujet NATS pour un traitement bas niveau.
+     * Subscribes a Consumer to a NATS subject for low-level processing.
      * <p>
-     * Cette méthode est plus performante que l'approche par annotation car elle
-     * évite
-     * la réflexion et permet un contrôle direct sur le traitement des messages.
+     * This method is more performant than the annotation approach as it avoids
+     * reflection and allows direct control over message processing.
      *
-     * @param subject  le sujet NATS sur lequel s'abonner
-     * @param consumer le Consumer qui traitera les messages (reçoit les données
-     *                 brutes en byte[])
-     * @param async    {@code true} pour traiter les messages de manière asynchrone,
-     *                 {@code false} pour un traitement synchrone
-     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     * @param subject  the NATS subject to subscribe to
+     * @param consumer the Consumer that will process the messages (receives raw
+     *                 data as byte[])
+     * @param async    {@code true} to process messages asynchronously,
+     *                 {@code false} for synchronous processing
+     * @throws IllegalStateException if the NATS connection is not available
      */
     void subscribeSubject(@NotNull String subject,
             @NotNull Consumer<byte[]> consumer,
             boolean async);
 
     /**
-     * Souscrit un Consumer à un sujet NATS pour un traitement de messages texte.
+     * Subscribes a Consumer to a NATS subject for text message processing.
      * <p>
-     * Cette méthode est plus pratique que la version byte[] pour les cas courants
-     * où les messages sont des chaînes de caractères UTF-8.
+     * This method is more convenient than the byte[] version for common cases
+     * where messages are UTF-8 strings.
      *
-     * @param subject  le sujet NATS sur lequel s'abonner
-     * @param consumer le Consumer qui traitera les messages (reçoit les messages
-     *                 comme String)
-     * @param async    {@code true} pour traiter les messages de manière asynchrone,
-     *                 {@code false} pour un traitement synchrone
-     * @throws IllegalStateException si la connexion NATS n'est pas disponible
+     * @param subject  the NATS subject to subscribe to
+     * @param consumer the Consumer that will process the messages (receives messages
+     *                 as String)
+     * @param async    {@code true} to process messages asynchronously,
+     *                 {@code false} for synchronous processing
+     * @throws IllegalStateException if the NATS connection is not available
      */
     void subscribeStringSubject(@NotNull String subject,
             @NotNull Consumer<String> consumer,
             boolean async);
 
     /**
-     * Annule l'abonnement actif sur un sujet NATS donné.
+     * Cancels the active subscription on a given NATS subject.
      * <p>
-     * Si aucun abonnement n'existe pour ce sujet, cet appel est sans effet.
+     * If no subscription exists for this subject, this call has no effect.
      *
-     * @param subject le sujet NATS à désabonner
+     * @param subject the NATS subject to unsubscribe
      */
     void unsubscribeSubject(@NotNull String subject);
 
     /**
-     * Vérifie si la connexion NATS est active et disponible.
+     * Checks if the NATS connection is active and available.
      *
-     * @return {@code true} si la connexion est active, {@code false} sinon
+     * @return {@code true} if the connection is active, {@code false} otherwise
      */
     boolean isConnected();
 
     /**
-     * Obtient le statut de connexion sous forme lisible.
+     * Gets the connection status in a readable form.
      *
-     * @return le statut actuel de la connexion (par exemple "CONNECTED",
+     * @return the current connection status (e.g. "CONNECTED",
      *         "DISCONNECTED", etc.)
      */
     @NotNull

@@ -7,9 +7,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 /**
- * Implémentation de NatsLogger pour BungeeCord utilisant
- * java.util.logging.Logger.
+ * NatsLogger implementation for BungeeCord using java.util.logging.Logger.
  */
 public class BungeeCordNatsLogger implements NatsLogger {
 

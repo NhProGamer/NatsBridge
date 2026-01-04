@@ -11,8 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 /**
- * Commande pour gérer et diagnostiquer la librairie NATS depuis BungeeCord.
+ * Command to manage and diagnose the NATS library from BungeeCord.
  */
 public class BungeeCordNatsCommand extends Command implements TabExecutor {
 
@@ -103,7 +104,7 @@ public class BungeeCordNatsCommand extends Command implements TabExecutor {
                 (connected ? ChatColor.GREEN + "Yes" : ChatColor.RED + "No"));
         sender.sendMessage(ChatColor.YELLOW + "Status: " + ChatColor.WHITE + status);
 
-        // Informations sur la configuration
+        // Configuration information
         sender.sendMessage(ChatColor.YELLOW + "Servers: " + ChatColor.WHITE +
                 String.join(", ", natsBridge.getConfig().getServers()));
 

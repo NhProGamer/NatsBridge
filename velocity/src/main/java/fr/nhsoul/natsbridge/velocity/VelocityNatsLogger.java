@@ -5,8 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+
 /**
- * Implémentation de NatsLogger pour Velocity utilisant SLF4J Logger.
+ * NatsLogger implementation for Velocity using SLF4J Logger.
  */
 public class VelocityNatsLogger implements NatsLogger {
 

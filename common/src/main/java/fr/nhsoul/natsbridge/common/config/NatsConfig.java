@@ -6,9 +6,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Objects;
 
+
 /**
- * Configuration pour la connexion NATS.
- * Contient tous les paramètres nécessaires pour établir et maintenir une connexion.
+ * Configuration for the NATS connection.
+ * Contains all parameters necessary to establish and maintain a connection.
  */
 public class NatsConfig {
 
@@ -48,7 +49,7 @@ public class NatsConfig {
     }
 
     /**
-     * Configuration d'authentification NATS.
+     * NATS authentication configuration.
      */
     public static class AuthConfig {
         private final boolean enabled;
@@ -84,7 +85,7 @@ public class NatsConfig {
     }
 
     /**
-     * Configuration TLS pour la connexion NATS.
+     * TLS configuration for NATS connection.
      */
     public static class TlsConfig {
         private final boolean enabled;
@@ -128,7 +129,7 @@ public class NatsConfig {
     }
 
     /**
-     * Configuration de reconnexion automatique.
+     * Automatic reconnection configuration.
      */
     public static class ReconnectConfig {
         private final int maxReconnects;

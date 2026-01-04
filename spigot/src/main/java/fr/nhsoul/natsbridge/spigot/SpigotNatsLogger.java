@@ -7,8 +7,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+
 /**
- * Implémentation de NatsLogger pour Spigot utilisant java.util.logging.Logger.
+ * NatsLogger implementation for Spigot using java.util.logging.Logger.
  */
 public class SpigotNatsLogger implements NatsLogger {
 
@@ -39,7 +40,7 @@ public class SpigotNatsLogger implements NatsLogger {
 
     @Override
     public void debug(@NotNull String message, Object... args) {
-        // Spigot n'a pas de niveau DEBUG natif simple par défaut, on utilise FINE
+        // Spigot doesn't have a simple native DEBUG level by default, using FINE
         logger.log(Level.FINE, format(message, args));
     }
 }

@@ -1,8 +1,9 @@
 package fr.nhsoul.natsbridge.common.exception;
 
+
 /**
- * Exception spécifique à la librairie NATS.
- * Encapsule toutes les erreurs liées à NATS pour un traitement uniforme.
+ * Exception specific to the NATS library.
+ * Encapsulates all NATS-related errors for uniform handling.
  */
 public class NatsException extends RuntimeException {
 
@@ -19,7 +20,7 @@ public class NatsException extends RuntimeException {
     }
 
     /**
-     * Exception levée lors des problèmes de connexion.
+     * Exception thrown during connection problems.
      */
     public static class ConnectionException extends NatsException {
         public ConnectionException(String message) {
@@ -32,7 +33,7 @@ public class NatsException extends RuntimeException {
     }
 
     /**
-     * Exception levée lors des problèmes de configuration.
+     * Exception thrown during configuration problems.
      */
     public static class ConfigurationException extends NatsException {
         public ConfigurationException(String message) {
@@ -45,7 +46,7 @@ public class NatsException extends RuntimeException {
     }
 
     /**
-     * Exception levée lors des problèmes de publication de messages.
+     * Exception thrown during message publication problems.
      */
     public static class PublishException extends NatsException {
         public PublishException(String message) {
@@ -58,7 +59,7 @@ public class NatsException extends RuntimeException {
     }
 
     /**
-     * Exception levée lors des problèmes de souscription.
+     * Exception thrown during subscription problems.
      */
     public static class SubscriptionException extends NatsException {
         public SubscriptionException(String message) {

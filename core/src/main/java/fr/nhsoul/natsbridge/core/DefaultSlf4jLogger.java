@@ -6,8 +6,9 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+
 /**
- * Implémentation par défaut de NatsLogger utilisant SLF4J.
+ * Default implementation of NatsLogger using SLF4J.
  */
 public class DefaultSlf4jLogger implements NatsLogger {
 

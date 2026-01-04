@@ -3,10 +3,10 @@ package fr.nhsoul.natsbridge.common.logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+
 /**
- * Interface de logging unifiée pour NatsBridge.
- * Permet d'utiliser les loggers natifs de chaque plateforme tout en gardant une
- * API commune.
+ * Unified logging interface for NatsBridge.
+ * Allows using each platform's native loggers while maintaining a common API.
  */
 public interface NatsLogger {
 
@@ -21,8 +21,8 @@ public interface NatsLogger {
     void debug(@NotNull String message, Object... args);
 
     /**
-     * Formate un message avec le préfixe et remplace les {} par les arguments
-     * fournis (style SLF4J).
+     * Formats a message with the prefix and replaces {} with the provided arguments
+     * (SLF4J style).
      */
     default String format(@NotNull String message, Object... args) {
         String formatted = message;

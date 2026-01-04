@@ -13,9 +13,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 
+
 /**
- * Plugin principal pour Spigot/Paper.
- * Initialise la librairie NATS et la rend disponible aux autres plugins.
+ * Main plugin for Spigot/Paper.
+ * Initializes the NATS library and makes it available to other plugins.
  */
 public class SpigotNatsPlugin extends JavaPlugin {
 
@@ -28,34 +29,15 @@ public class SpigotNatsPlugin extends JavaPlugin {
         instance = this;
 
         try {
-            // Créer le fichier de configuration s'il n'existe pas
+            // Create configuration file if it doesn't exist
             setupConfigFile();
 
-            // Initialiser la librairie NATS
+            // Initialize NATS library
             File configFile = new File(getDataFolder(), "nats-config.yml");
-            natsBridge = natsBridge.initialize(configFile);
-
-            // Démarrer NATS
-            natsBridge.start().thenRun(() -> {
-                Bukkit.getScheduler().runTask(this, () -> {
-                    getLogger().info("NATS library started successfully");
-
-                    getServer().getPluginManager().callEvent(new SpigotNatsBridgeConnectedEvent());
-                });
-            }).exceptionally(throwable -> {
-                getLogger().severe("Failed to start NATS library: " + throwable.getMessage());
-                getServer().getPluginManager().disablePlugin(this);
-                return null;
-            });
-
-            // Enregistrer les commandes
-            SpigotNatsCommand command = new SpigotNatsCommand(this, natsBridge);
-            getCommand("nats").setExecutor(command);
-            getCommand("nats").setTabCompleter(command);
-
-            getLogger().info("NatsBridge plugin enabled successfully");
-
-            // Initialisation de NatsBridge
+            // The following redundant initialization block has been merged and corrected in previous iterations
+            // to ensure correct initialization flow. Correcting here to avoid duplication.
+            
+            // Initialization of NatsBridge
             try {
                 NatsBridge.initialize(configFile, new SpigotNatsLogger(getLogger()));
                 natsBridge = NatsBridge.getInstance();
@@ -75,6 +57,13 @@ public class SpigotNatsPlugin extends JavaPlugin {
                 return;
             }
 
+            // Register commands
+            SpigotNatsCommand command = new SpigotNatsCommand(this, natsBridge);
+            getCommand("nats").setExecutor(command);
+            getCommand("nats").setTabCompleter(command);
+
+            getLogger().info("NatsBridge plugin enabled successfully");
+
         } catch (Exception e) {
             getLogger().severe("Failed to enable NatsBridge plugin: " + e.getMessage());
             e.printStackTrace();
@@ -90,16 +79,16 @@ public class SpigotNatsPlugin extends JavaPlugin {
             natsBridge.shutdown();
         }
 
-        natsBridge.resetInstance();
+        NatsBridge.resetInstance();
         instance = null;
 
         getLogger().info("NatsBridge plugin disabled");
     }
 
     /**
-     * Obtient l'instance du plugin Spigot.
+     * Gets the Spigot plugin instance.
      *
-     * @return l'instance du plugin
+     * @return the plugin instance
      */
     @NotNull
     public static SpigotNatsPlugin getInstance() {
@@ -110,9 +99,9 @@ public class SpigotNatsPlugin extends JavaPlugin {
     }
 
     /**
-     * Obtient l'API NATS.
+     * Gets the NATS API.
      *
-     * @return l'API NATS
+     * @return the NATS API
      */
     @NotNull
     public static NatsAPI getNatsAPI() {
@@ -120,9 +109,9 @@ public class SpigotNatsPlugin extends JavaPlugin {
     }
 
     /**
-     * Obtient la librairie NATS.
+     * Gets the NATS library.
      *
-     * @return la librairie NATS
+     * @return the NATS library
      */
     @NotNull
     public NatsBridge getNatsBridge() {

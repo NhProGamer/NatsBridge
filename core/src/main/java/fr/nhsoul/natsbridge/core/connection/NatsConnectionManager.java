@@ -15,10 +15,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.net.ssl.SSLContext;
 import java.time.Duration;
 
+
 /**
- * Gestionnaire de connexion NATS simplifié.
- * Délègue la gestion de la connexion et de la reconnexion à la librairie native
- * NATS.
+ * Simplified NATS connection manager.
+ * Delegates connection and reconnection management to the native NATS library.
  */
 public class NatsConnectionManager {
 
@@ -35,8 +35,8 @@ public class NatsConnectionManager {
     }
 
     /**
-     * Établit la connexion NATS de manière synchrone.
-     * La reconnexion est gérée automatiquement par la librairie NATS.
+     * Establishes the NATS connection synchronously.
+     * Reconnection is handled automatically by the NATS library.
      */
     public void connect() {
         if (isConnected()) {

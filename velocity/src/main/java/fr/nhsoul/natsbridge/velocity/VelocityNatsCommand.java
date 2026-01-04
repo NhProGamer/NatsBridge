@@ -11,8 +11,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 /**
- * Commande pour gérer et diagnostiquer la librairie NATS depuis Velocity.
+ * Command to manage and diagnose the NATS library from Velocity.
  */
 public class VelocityNatsCommand implements SimpleCommand {
 
@@ -120,7 +121,7 @@ public class VelocityNatsCommand implements SimpleCommand {
         source.sendMessage(Component.text("Status: ", NamedTextColor.YELLOW)
                 .append(Component.text(status, NamedTextColor.WHITE)));
 
-        // Informations sur la configuration
+        // Configuration information
         source.sendMessage(Component.text("Servers: ", NamedTextColor.YELLOW)
                 .append(Component.text(String.join(", ", natsBridge.getConfig().getServers()), NamedTextColor.WHITE)));
 

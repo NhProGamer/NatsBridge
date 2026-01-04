@@ -16,9 +16,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
+
 /**
- * Implémentation thread-safe de l'API NATS.
- * Utilise le gestionnaire de connexion partagé pour publier des messages.
+ * Thread-safe implementation of the NATS API.
+ * Uses the shared connection manager to publish messages.
  */
 public class NatsAPIImpl implements NatsAPI {
 
@@ -124,7 +125,7 @@ public class NatsAPIImpl implements NatsAPI {
             throw new IllegalArgumentException("Subject cannot be empty or blank");
         }
 
-        // Validation basique du format NATS
+        // Basic NATS format validation
         if (subject.contains(" ")) {
             throw new IllegalArgumentException("Subject cannot contain spaces: " + subject);
         }

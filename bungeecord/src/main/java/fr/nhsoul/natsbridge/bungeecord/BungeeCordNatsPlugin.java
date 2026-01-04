@@ -12,9 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.logging.Level;
 
+
 /**
- * Plugin principal pour BungeeCord.
- * Initialise la librairie NATS et la rend disponible aux autres plugins.
+ * Main plugin for BungeeCord.
+ * Initializes the NATS library and makes it available to other plugins.
  */
 public class BungeeCordNatsPlugin extends Plugin {
 
@@ -27,10 +28,10 @@ public class BungeeCordNatsPlugin extends Plugin {
         instance = this;
 
         try {
-            // Créer le fichier de configuration s'il n'existe pas
+            // Create configuration file if it doesn't exist
             setupConfigFile();
 
-            // Initialiser la librairie NATS
+            // Initialize NATS library
             File configFile = new File(getDataFolder(), "nats-config.yml");
 
             try {
@@ -38,7 +39,7 @@ public class BungeeCordNatsPlugin extends Plugin {
                 natsBridge = NatsBridge.getInstance();
                 natsBridge.start().thenRun(() -> {
                     getLogger().info("NATS library started successfully");
-                    // Enregistrer les événements pour les nouveaux plugins
+                    // Call the event for new plugins
                     getProxy().getPluginManager().callEvent(new BungeeNatsBridgeConnectedEvent());
                 }).exceptionally(throwable -> {
                     getLogger().log(Level.SEVERE, "Failed to start NATS library", throwable);
@@ -48,7 +49,7 @@ public class BungeeCordNatsPlugin extends Plugin {
                 getLogger().log(Level.SEVERE, "Could not initialize NatsBridge", e);
             }
 
-            // Enregistrer les commandes
+            // Register commands
             BungeeCordNatsCommand command = new BungeeCordNatsCommand(this, natsBridge);
             getProxy().getPluginManager().registerCommand(this, command);
 
@@ -74,9 +75,9 @@ public class BungeeCordNatsPlugin extends Plugin {
     }
 
     /**
-     * Obtient l'instance du plugin BungeeCord.
+     * Gets the BungeeCord plugin instance.
      *
-     * @return l'instance du plugin
+     * @return the plugin instance
      */
     @NotNull
     public static BungeeCordNatsPlugin getInstance() {
@@ -87,9 +88,9 @@ public class BungeeCordNatsPlugin extends Plugin {
     }
 
     /**
-     * Obtient l'API NATS.
+     * Gets the NATS API.
      *
-     * @return l'API NATS
+     * @return the NATS API
      */
     @NotNull
     public static NatsAPI getNatsAPI() {
@@ -97,9 +98,9 @@ public class BungeeCordNatsPlugin extends Plugin {
     }
 
     /**
-     * Obtient la librairie NATS.
+     * Gets the NATS library.
      *
-     * @return la librairie NATS
+     * @return the NATS library
      */
     @NotNull
     public NatsBridge getNatsBridge() {

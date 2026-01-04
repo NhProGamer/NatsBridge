@@ -19,9 +19,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+
 /**
- * Plugin principal pour Velocity.
- * Initialise la librairie NATS et la rend disponible aux autres plugins.
+ * Main plugin for Velocity.
+ * Initializes the NATS library and makes it available to other plugins.
  */
 @Plugin(id = "natsbridge", name = "NatsBridge", version = "1.0.0-SNAPSHOT", description = "NATS messaging library for Minecraft servers", authors = {
         "NhPro" })
@@ -48,14 +49,14 @@ public class VelocityNatsPlugin {
         server.getEventManager().register(instance, new VelocityNatsBridgeConnectedEvent());
 
         try {
-            // Créer le fichier de configuration s'il n'existe pas
+            // Create configuration file if it doesn't exist
             setupConfigFile();
 
-            // Initialiser la librairie NATS
+            // Initialize NATS library
             Path configPath = dataDirectory.resolve("nats-config.yml");
             File configFile = configPath.toFile();
 
-            // Initialisation de NatsBridge
+            // Initialization of NatsBridge
             try {
                 NatsBridge.initialize(configFile, new VelocityNatsLogger(logger));
                 natsBridge = NatsBridge.getInstance();
@@ -70,7 +71,7 @@ public class VelocityNatsPlugin {
                 logger.error("Could not initialize NatsBridge", e);
             }
 
-            // Enregistrer les commandes
+            // Register commands
             VelocityNatsCommand command = new VelocityNatsCommand(this, natsBridge);
             server.getCommandManager().register("nats", command);
 
@@ -89,16 +90,16 @@ public class VelocityNatsPlugin {
             natsBridge.shutdown();
         }
 
-        natsBridge.resetInstance();
+        NatsBridge.resetInstance();
         instance = null;
 
         logger.info("NatsBridge plugin disabled");
     }
 
     /**
-     * Obtient l'instance du plugin Velocity.
+     * Gets the Velocity plugin instance.
      *
-     * @return l'instance du plugin
+     * @return the plugin instance
      */
     @NotNull
     public static VelocityNatsPlugin getInstance() {
@@ -109,9 +110,9 @@ public class VelocityNatsPlugin {
     }
 
     /**
-     * Obtient l'API NATS.
+     * Gets the NATS API.
      *
-     * @return l'API NATS
+     * @return the NATS API
      */
     @NotNull
     public static NatsAPI getNatsAPI() {
@@ -119,9 +120,9 @@ public class VelocityNatsPlugin {
     }
 
     /**
-     * Obtient la librairie NATS.
+     * Gets the NATS library.
      *
-     * @return la librairie NATS
+     * @return the NATS library
      */
     @NotNull
     public NatsBridge getNatsBridge() {
@@ -132,9 +133,9 @@ public class VelocityNatsPlugin {
     }
 
     /**
-     * Obtient le serveur proxy.
+     * Gets the proxy server.
      *
-     * @return le serveur proxy
+     * @return the proxy server
      */
     @NotNull
     public ProxyServer getServer() {
@@ -142,9 +143,9 @@ public class VelocityNatsPlugin {
     }
 
     /**
-     * Obtient le logger.
+     * Gets the logger.
      *
-     * @return le logger
+     * @return the logger
      */
     @NotNull
     public Logger getLogger() {
@@ -152,9 +153,9 @@ public class VelocityNatsPlugin {
     }
 
     /**
-     * Obtient le répertoire de données.
+     * Gets the data directory.
      *
-     * @return le répertoire de données
+     * @return the data directory
      */
     @NotNull
     public Path getDataDirectory() {
