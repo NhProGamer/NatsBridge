@@ -5,7 +5,6 @@ include 'core'
 include 'velocity'
 include 'spigot'
 include 'bungeecord'
-include 'annotation-processor'
 
 // Appliquer les plugins de convention aux sous-projets
 apply from: 'gradle/versions.gradle'

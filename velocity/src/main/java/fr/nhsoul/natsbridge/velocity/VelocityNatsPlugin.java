@@ -24,7 +24,7 @@ import java.nio.file.StandardCopyOption;
  * Main plugin for Velocity.
  * Initializes the NATS library and makes it available to other plugins.
  */
-@Plugin(id = "natsbridge", name = "NatsBridge", version = "1.0.0-SNAPSHOT", description = "NATS messaging library for Minecraft servers", authors = {
+@Plugin(id = "natsbridge", name = "NatsBridge", version = "1.0.0", description = "NATS messaging library for Minecraft servers", authors = {
         "NhPro" })
 public class VelocityNatsPlugin {
 
